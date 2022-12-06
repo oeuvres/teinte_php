@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 /**
  * Part of Teinte https://github.com/oeuvres/teinte
@@ -10,8 +10,6 @@
  *                    & École nationale des chartes
  */
 
-declare(strict_types=1);
-
 namespace Oeuvres\Kit;
 
 use Exception;
@@ -20,7 +18,7 @@ use Exception;
  * Tools to deal with PHP Http oddities
  * code convention https://www.php-fig.org/psr/psr-12/
  */
-class Web
+class Http
 {
     /** web parameters */
     static $pars;
@@ -29,20 +27,7 @@ class Web
     /** relative path to base application, calculated with pathinfo */
     static $basehref;
     /** Content-Type header */
-    static $mime = array(
-        "css"  => 'text/css; charset=UTF-8',
-        "epub" => 'application/epub+zip',
-        "html" => 'text/html; charset=UTF-8',
-        "iramuteq" => "text/plain; charset=UTF-8",
-        "jpg"  => 'image/jpeg',
-        "js"  => 'text/javascript; charset=UTF-8',
-        "md" => "text/plain; charset=UTF-8",
-        "markdown" => "text/plain; charset=UTF-8",
-        "naked" => "text/plain; charset=UTF-8",
-        "png"  => 'image/png',
-        "xml"  => 'text/xml',
-        "xhtml" => 'text/html; charset=UTF-8',
-    );
+    static ?array $mime;
     /** Langs */
     static $langs = array(
         "en" => "English",
@@ -50,6 +35,14 @@ class Web
     );
     /** lang found */
     static $lang;
+
+    static public function session_before()
+    {
+        // required for the php PHPSESSID param
+        session_set_cookie_params(["SameSite" => "lax"]); //none, lax, strict
+        session_set_cookie_params(["Secure" => "true"]); //false, true
+        session_set_cookie_params(["HttpOnly" => "true"]); //false, true
+    }
 
     /**
      * Get absolute URL
@@ -146,7 +139,7 @@ class Web
             }
             */
             // sanitize value for xss
-            $v= strip_tags(trim($v));
+            $v = strip_tags(trim($v));
             $pars[$k][] = $v;
         }
         return $pars;
@@ -157,8 +150,8 @@ class Web
      */
     public static function par(
         $name,
-        ?string $default = null, 
-        ?string $pattern = null, 
+        ?string $default = null,
+        ?string $pattern = null,
         ?string $cookie = null
     ) {
         // store params array extracted from query
@@ -168,8 +161,8 @@ class Web
         // no key requested, shout ?
         if (!$name) {
             Log::warning(
-                "No name given for an http param\n" 
-                . implode("\n", I18n::trace())
+                "No name given for an http param\n"
+                    . implode("\n", I18n::trace())
             );
             return null;
         }
@@ -180,14 +173,13 @@ class Web
             $value = self::$pars[$name][0];
         }
         // param maybe set programmatically, for example by Route
-        else if (isset($_GET[$name]) && trim($_GET[$name]) ) {
+        else if (isset($_GET[$name]) && trim($_GET[$name])) {
             $value = $_GET[$name];
-        }
-        else if (isset($_POST[$name]) && trim($_POST[$name]) ) {
+        } else if (isset($_POST[$name]) && trim($_POST[$name])) {
             $value = $_POST[$name];
         }
         // bad practice, maybe confused by cookie, but be nice
-        else if (isset($_REQUEST[$name]) && trim($_REQUEST[$name]) ) {
+        else if (isset($_REQUEST[$name]) && trim($_REQUEST[$name])) {
             $value = $_REQUEST[$name];
         }
         // validate before set a cookie
@@ -232,7 +224,7 @@ class Web
             return $default;
         }
         return null;
-    } 
+    }
 
 
     /**
@@ -247,10 +239,10 @@ class Web
      *)
      */
     public static function pars(
-        ?string $name = null, 
-        ?int $expire = 0, 
-        ?string $pattern = null, 
-        ?string $default = null, 
+        ?string $name = null,
+        ?int $expire = 0,
+        ?string $pattern = null,
+        ?string $default = null,
         ?string $query = null
     ) {
         // store params array extracted from query
@@ -340,8 +332,8 @@ class Web
     /**
      * build an optimized query string from requested params
      */
-    public static function qstring (
-       array $names 
+    public static function qstring(
+        array $names
     ): string {
         if (!self::$pars) self::$pars = self::parse();
         $query = array();
@@ -364,7 +356,9 @@ class Web
      * $exclude=array() : exclude some parameters
      */
     public static function query(
-        $keep = false, $exclude = array(), $query = null
+        $keep = false,
+        $exclude = array(),
+        $query = null
     ): string {
         // query given as param
         if ($query) {
@@ -374,8 +368,7 @@ class Web
         else if ($_SERVER['REQUEST_METHOD'] == "POST") {
             if (isset($HTTP_RAW_POST_DATA)) {
                 $query = $HTTP_RAW_POST_DATA;
-            }
-            else {
+            } else {
                 $query = file_get_contents("php://input");
             }
         }
@@ -393,6 +386,40 @@ class Web
         }
         return $query;
     }
+
+    /**
+     * Read file on request, or send nice headers fo nor modified
+     */
+    public static function readfile(string $file):bool
+    {
+        if (!isset(self::$mime)) {
+            self::$mime = include(__DIR__ . "/mime.php");
+        }
+        if (!Filesys::readable($file)) {
+            Log::warning(I18n::_("Web.readfile.404"));
+            return false;
+        }
+        self::notModified($file);
+        $ext = ltrim(pathinfo($file, PATHINFO_EXTENSION), '.');
+        if (isset(self::$mime[$ext])) {
+            $mime = self::$mime[$ext];
+        }
+        if (!$mime) $mime = mime_content_type($file);
+        // encoding ? default utf-8
+        if (
+            substr($mime, 0, 5) == 'text/' 
+            || $mime == 'application/javascript'
+        ) {
+            $mime .= "; charset=utf-8";
+        }
+        header('Content-Type: ' . $mime);
+        $length = filesize($file);
+        header("Content-Length: $length");
+        header("Accept-Ranges: $length");        
+        readfile($file);
+        exit();
+    }
+
     /**
      * Send the best headers for cache, according to the request and a timestamp
      */
@@ -434,7 +461,7 @@ class Web
     header("ETag: $etag");
     */
         // it seems there is something to send
-        header("Cache control: public"); // for FireFox over https
+        header("Cache-control: public"); // for FireFox over https
         header("Last-Modified: $modification");
         // it's good to
         if ($expires) header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $expires) . ' GMT');
@@ -453,6 +480,7 @@ class Web
         if (isset($_REQUEST['force'])) return '?force=';
         return false;
     }
+
     /**
      * Get link to un upload file, by key or first one if no key
      * return a file record like in $_FILES
@@ -517,20 +545,9 @@ class Web
     /**
      * Get length in byte from a string content, for Content-Length http header
      */
-    static function length(string &$str) {
-        if (!$str) return 0;
-        return ini_get('mbstring.func_overload') ? mb_strlen($str , '8bit') : strlen($str);
-    }
-}
- /* What that for ? old ?
-if (get_magic_quotes_gpc()) {
-    function stripslashes_gpc(&$value)
+    static function length(string &$str)
     {
-        $value = stripslashes($value);
+        if (!$str) return 0;
+        return ini_get('mbstring.func_overload') ? mb_strlen($str, '8bit') : strlen($str);
     }
-    array_walk_recursive($_GET, 'stripslashes_gpc');
-    array_walk_recursive($_POST, 'stripslashes_gpc');
-    array_walk_recursive($_COOKIE, 'stripslashes_gpc');
-    array_walk_recursive($_REQUEST, 'stripslashes_gpc');
 }
-*/
