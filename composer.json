@@ -1,0 +1,24 @@
+{
+    "name": "oeuvres/teinte",
+    "description": "Transform texts from and to : TEI, DOCX, HTML, EPUB, MD…",
+    "authors": [
+        {
+            "name": "Frédéric Glorieux",
+            "email": "frederic.glorieux@fictif.org"
+        }
+    ],
+    "type": "library",
+    "license": "BSD-3-Clause",
+    "require": {
+        "php": ">=7.2",
+        "erusev/parsedown": "^1.7",
+        "erusev/parsedown-extra": "^0.8.1",
+        "oeuvres/kit": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Oeuvres\\Teinte\\": "src"
+        }
+    },
+    "minimum-stability": "stable"
+}
