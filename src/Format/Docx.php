@@ -43,7 +43,7 @@ class Docx extends Zip
     {
         if (self::$init) return;
         parent::init();
-        self::$xsl_dir = dirname(__DIR__, 4) . '/xsl/';
+        self::$xsl_dir = dirname(__DIR__, 2) . "/src/xsl/";
         $pcre_tsv = self::$xsl_dir . 'docx/teilike_pcre.tsv';
         self::$preg = Parse::pcre_tsv($pcre_tsv);
         self::$init = true;

@@ -1,16 +1,18 @@
 <?php
+
+declare(strict_types=1);
+
 /**
- * Part of Teinte https://github.com/oeuvres/teinte
+ * Part of Teinte https://github.com/oeuvres/teinte_php
  * Copyright (c) 2020 frederic.glorieux@fictif.org
  * Copyright (c) 2013 frederic.glorieux@fictif.org & LABEX OBVIL
  * Copyright (c) 2012 frederic.glorieux@fictif.org
  * BSD-3-Clause https://opensource.org/licenses/BSD-3-Clause
  */
 
-declare(strict_types=1);
+namespace Oeuvres\Teinte;
 
-include_once(__DIR__ . '/php/autoload.php');
-
+use Exception;
 use Psr\Log\{LogLevel};
 use Oeuvres\Kit\{Filesys, Log, LoggerCli};
 use Oeuvres\Teinte\Format\{Tei};
@@ -19,9 +21,9 @@ use Oeuvres\Teinte\Tei2\{AbstractTei2};
 /**
  * A simple command line for Tei output formats
  */
-Teinte::cli();
-class Teinte {
-    public static function help():string 
+class Teinte
+{
+    public static function help(): string
     {
         $help = '
 Tranform tei files in different formats
@@ -30,20 +32,23 @@ Tranform tei files in different formats
 PARAMETERS
 format      : + among
 ' . AbstractTei2::help() .
-'globs       : + files or globs
+            'globs       : + files or globs
 
 OPTIONS
 -f          : ? force deletion of destination file (no test of freshness)
 -d dst_dir  : ? destination directory for generated files
--t tmpl_dir : ?  a specific template directory, known ones here';
+-t tmpl_dir : ?  a template directory';
+        /*
 $templates = "templates/";
 $glob = glob(__DIR__ . "/templates/*", GLOB_ONLYDIR | GLOB_MARK);
 foreach ($glob as $dir) {
     $help .= "\n    " . Filesys::relpath(getcwd(), $dir);
 }
+*/
         return $help . "\n";
     }
-    public static function cli() {
+    public static function cli()
+    {
         global $argv;
         $shortopts = "";
         $shortopts .= "h"; // help message
@@ -51,7 +56,7 @@ foreach ($glob as $dir) {
         $shortopts .= "d:"; // output directory
         $shortopts .= "t:"; // template directory
         $options = getopt($shortopts);
-        $count = count($argv); 
+        $count = count($argv);
         // no args, probably not correct
         if ($count < 2) exit(self::help());
         // loop on args to find first format
@@ -81,7 +86,7 @@ foreach ($glob as $dir) {
         if (isset($options['t'])) $tmpl_dir = $options['t'];
         // loop on globs
         for (; $i < $count; $i++) {
-            self::export (
+            self::export(
                 $argv[$i],
                 $formats,
                 $dst_dir,
@@ -91,7 +96,7 @@ foreach ($glob as $dir) {
         }
     }
     public static function export(
-        string $glob, 
+        string $glob,
         array $formats,
         ?string $dst_dir = "",
         ?string $tmpl_dir = null,
@@ -103,7 +108,7 @@ foreach ($glob as $dir) {
         $source->template($tmpl_dir); // set template dir
         foreach (glob($glob) as $src_file) {
             $nodone = true; // for lazy load
-            foreach($formats as $format) {
+            foreach ($formats as $format) {
                 // calculate $dst_file according to format
                 $dst_file = $source->destination($src_file, $format, $dst_dir);
                 // change inplace ? search/replace, reports…
@@ -118,8 +123,7 @@ foreach ($glob as $dir) {
                     Log::info($src_file);
                     try {
                         $source->load($src_file);
-                    } 
-                    catch (Exception $e) {
+                    } catch (Exception $e) {
                         // nothing could be done with this file
                         break;
                     }
@@ -128,11 +132,10 @@ foreach ($glob as $dir) {
                 // for reports, no output if no force
                 if (!$force && $inplace) {
                     $source->toDoc($format);
-                }
-                else {
+                } else {
                     $source->toUri($format, $dst_file);
                 }
-           }
+            }
         }
     }
 }

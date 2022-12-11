@@ -20,5 +20,6 @@
             "Oeuvres\\Teinte\\": "src"
         }
     },
-    "minimum-stability": "stable"
+    "bin": ["bin/my-script"],
+    "minimum-stability": "dev"
 }

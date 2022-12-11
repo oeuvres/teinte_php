@@ -1,12 +1,10 @@
-<?php
+<?php declare(strict_types=1);
 
 /**
  * Part of Teinte https://github.com/oeuvres/teinte
  * BSD-3-Clause https://opensource.org/licenses/BSD-3-Clause
  * Copyright (c) 2021 frederic.glorieux@fictif.org
  */
-
-declare(strict_types=1);
 
 namespace Oeuvres\Teinte\Tei2;
 

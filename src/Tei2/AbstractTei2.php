@@ -1,14 +1,12 @@
-<?php
+<?php declare(strict_types=1);
 
 /**
- * Part of Teinte https://github.com/oeuvres/teinte
+ * Part of Teinte https://github.com/oeuvres/teinte_php
  * Copyright (c) 2020 frederic.glorieux@fictif.org
  * Copyright (c) 2013 frederic.glorieux@fictif.org & LABEX OBVIL
  * Copyright (c) 2012 frederic.glorieux@fictif.org
  * BSD-3-Clause https://opensource.org/licenses/BSD-3-Clause
  */
-
-declare(strict_types=1);
 
 namespace Oeuvres\Teinte\Tei2;
 
@@ -40,7 +38,7 @@ abstract class AbstractTei2
     {
         if (self::$init) return;
         // TO THINK, good way to configure xsl pack
-        self::$xsl_dir = dirname(__DIR__, 4) . "/xsl/";
+        self::$xsl_dir = dirname(__DIR__, 2) . "/src/xsl/";
         self::$transfos = Parse::json(file_get_contents(__DIR__ . '/tei2.json'));
         self::$init = true;
     }

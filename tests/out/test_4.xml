@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://oeuvres.github.io/teinte/teinte.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0" xml:lang="fr">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt>
+        <title>{Title}</title>
+        <author key="{author}"/>
+      </titleStmt>
+      <editionStmt>
+        <edition>{publisher}</edition>
+        <respStmt>
+          <name>{Transcription}</name>
+          <resp>Transcription</resp>
+        </respStmt>
+      </editionStmt>
+      <publicationStmt>
+        <publisher>{publisher}</publisher>
+        <date when="2021"/>
+        <idno>{filename}</idno>
+        <availability status="restricted">
+          <licence target="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.fr"/>
+        </availability>
+      </publicationStmt>
+      <sourceDesc>
+        <bibl>{bibl}</bibl>
+      </sourceDesc>
+    </fileDesc>
+    <profileDesc>
+      <langUsage>
+        <language ident="fr"/>
+      </langUsage>
+      <creation>
+        <date when="{date}"/>
+      </creation>
+    </profileDesc>
+  </teiHeader>
+  <text>
+    <body>
+
+
+<div>
+
+<head>Partie I</head>
+
+<p>Texte simple<note place="foot">
+    <p>Note de bas de page, avec un <ref>lien</ref>.</p>
+    <p>En deux paragraphes et un titre 2.</p>
+</note><note place="end">Une note de fin de document, avec <ref>lien</ref>.</note>. Un peu d’<hi>italique</hi> sans style. <title>Le <hi>Quichotte</hi> de <hi rend="sc">Cervantès</hi> au XXI<hi rend="sup">e</hi> siècle</title>.</p>
+
+<quote><p>Texte avec <ref target="https://www.tei-c.org/release/doc/tei-p5-doc/fr/html/REF-ELEMENTS.html">lien <hi>italisé</hi> long</ref>.</p></quote>
+
+
+</div>
+<div>
+
+<head>Partie II</head>
+
+<p>Une ligne avec saut de ligne
+<lb/>Ligne de suite.</p>
+
+
+<div>
+
+<head>II, 1<hi rend="sup">ère</hi> section</head>
+
+<p>Contenu II.1.</p>
+
+<list>
+<item>Liste à points
+<list>
+
+
+<item>Point 1.?.1</item>
+
+<item>Point 1.2</item>
+</list>
+</item>
+
+
+<item>2
+<list>
+<item>2.1</item>
+<item>2.2</item>
+<item>2.3</item>
+</list>
+</item>
+
+
+<item>3</item>
+</list>
+
+
+</div>
+<div>
+
+<head>II, 2<hi rend="sup">ème</hi> section</head>
+
+<p>Contenu II.2.</p>
+
+
+<div>
+
+<head>II.2.a</head>
+
+<p>Contenu sous titre niveau 3</p>
+
+<table>
+  <row>
+    <cell>
+      <p>Titre dans un tableau</p>
+    </cell>
+    <cell>
+      <p/>
+    </cell>
+    <cell>
+      <p/>
+    </cell>
+  </row>
+  <row>
+    <cell>
+      <p/>
+    </cell>
+    <cell>
+      <p/>
+    </cell>
+    <cell>
+      <p/>
+    </cell>
+  </row>
+  <row>
+    <cell>
+      <p/>
+    </cell>
+    <cell>
+      <p/>
+    </cell>
+    <cell>
+      <p/>
+    </cell>
+  </row>
+</table>
+
+<p/>
+
+<list>
+<item>Une liste</item>
+<item>Item 2
+<list>
+<item>Item 2.a</item>
+<item>Item 2.b</item>
+</list>
+</item>
+
+
+<item>Item 3</item>
+</list>
+
+
+</div>
+</div>
+</div>
+<div>
+
+<head>Partie III</head>
+
+<p>Texte de la partie III</p>
+
+</div>
+</body>
+  </text>
+</TEI>
