@@ -4,7 +4,7 @@ Teinte is an [open source](https://github.com/oeuvres/teinte) library to convert
 
 The heart is an embeded XSLT-1.0 pack of transformations [teinte_xsl](https://github.com/oeuvres/teinte_xsl). TEI is an academic XML schema dedicated to all forms of texts, not only blog posts but also: novels, theatre, letters and most of what have been printed till centuries. *Teinte suite* has been developed during more than 15 years, mainly by <a onmouseover="this.href='mailto'+'\x3A'+'frederic.glorieux'+'\x40'+'fictif.org'" href="#">Frédéric Glorieux</a> under different academic affiliations.
 
-![Teinte converter](doc/teinte_converter.png)
+![Teinte xsl](doc/teinte_xsl.png)
 
 
 
@@ -12,7 +12,7 @@ The heart is an embeded XSLT-1.0 pack of transformations [teinte_xsl](https://gi
 
 ### [*Complete works* of Denis de Rougemont (1906–1985)](https://www.unige.ch/rougemont/)
 
-<a  href="https://www.unige.ch/rougemont/"><img width="300px" align="left" src="doc/rougemont_teinte.png"  alt="Rougemont"/></a>[Rougemont](https://en.wikipedia.org/wiki/Denis_de_Rougemont) is a Swiss writer, aboiut 30 books and 1000 articles, known for *L’Amour et l’Occident*. Directed by Nicolas Stenger (Université de Genève), the project include digitization, publication and mining of the complete works in [open source](https://github.com/erougemont/). *Teinte* was used to convert files obtained from OCR, from DOCX to TEI. The team of editors has been trained to correct TEI. Web publishing is done from the XML master to the HTML for the CMS of the university (Concrete 5). 
+<a  href="https://www.unige.ch/rougemont/"><img width="300px" align="left" src="doc/rougemont_teinte.png"  alt="Rougemont"/></a> The *eRougemont* project, directed by Nicolas Stenger (Université de Genève), includes digitization, publication and mining of the complete works in [open source](https://github.com/erougemont/) (about 30 books and 1000 articles). *Teinte* was used to convert files obtained with OCR, from DOCX to TEI. The team of editors has been trained to correct TEI. Web publishing is done from the XML master to HTML, for the CMS of the university (Concrete 5). 
 
 
 ### [The *ObTIC* converter](https://obtic.huma-num.fr/teinte/)
