@@ -1,0 +1,34 @@
+# python odds
+__pycache__/
+*.egg-info/
+*.py[cod]
+
+# tmp
+_epub
+_up.php
+site/img/test.svg
+xsl/docx/_tei.sed
+
+
+tests/out/
+work/
+
+# generators garbage
+.~*
+~$*
+~WRL*
+.DS_Store
+*.aux
+*.bak
+*.cb
+*.cb2
+*.dvi
+*.fdb_latexmk
+*.fls
+*.idx
+*.log
+*.out
+*.swp
+*.toc
+*.xdv
+pars.php

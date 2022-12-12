@@ -980,7 +980,8 @@ Could be correct for a text only version in <xsl:value-of select=""/>
             <xsl:value-of select="@n"/>
             <xsl:text> </xsl:text>
           </xsl:if>
-          <xsl:for-each select="tei:head[not(@type='sub')][not(@type='subtitle')][not(@type='kicker')]">
+          <!-- [not(@type='kicker')] -->
+          <xsl:for-each select="tei:head[not(@type='sub')][not(@type='subtitle')]">
             <xsl:apply-templates mode="title" select="."/>
             <xsl:if test="position() != last()">
               <!-- test if title end by ponctuation -->

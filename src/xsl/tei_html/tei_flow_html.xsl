@@ -128,7 +128,10 @@ Sections
         <xsl:call-template name="id"/>
       </xsl:attribute>
       <xsl:call-template name="atts">
-        <xsl:with-param name="class">level<xsl:value-of select="$level + 1"/></xsl:with-param>
+        <xsl:with-param name="class">
+          level<xsl:value-of select="$level + 1"/>
+          <xsl:if test="@type = 'act' and $verse"> verse</xsl:if>
+        </xsl:with-param>
       </xsl:call-template>
       <!-- attributs epub3 -->
       <xsl:choose>
