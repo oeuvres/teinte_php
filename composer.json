@@ -13,7 +13,7 @@
         "php": ">=7.2",
         "erusev/parsedown": "^1.7",
         "erusev/parsedown-extra": "^0.8.1",
-        "oeuvres/kit": "^1.0"
+        "oeuvres/kit": "dev-main"
     },
     "autoload": {
         "psr-4": {
