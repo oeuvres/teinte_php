@@ -22,7 +22,8 @@ XSLT 1.0 is compatible browser, PHP, Python, Java…
   </xsl:param>
   <xsl:param name="theme">
     <xsl:choose>
-      <xsl:when test="true()">https://oeuvres.github.io/teinte/theme/</xsl:when>
+      <!-- https://oeuvres.github.io -->
+      <xsl:when test="true()">../../teinte_theme/</xsl:when>
       <xsl:when test="$xslbase != ''">
         <xsl:value-of select="$xslbase"/>
         <xsl:text>theme/</xsl:text>
