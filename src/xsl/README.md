@@ -3,7 +3,7 @@
 [teinte_xsl](https://github.com/oeuvres/teinte_xsl/) is an XSLT-1.0 pack to transform TEI documents, from, and to, different formats.
 
 
-![Teinte xsl graph](docs/teinte_xsl.png)
+![Teinte xsl graph](doc/teinte_xsl.png)
 
 This pack ic compatible with xsltproc and other XSLT engine. Tested with
  * PHP: [teinte_php](https://github.com/oeuvres/teinte_php)
@@ -16,7 +16,7 @@ This pack ic compatible with xsltproc and other XSLT engine. Tested with
 
 All modern browsers has the xsltproc library embedded. This allows to provide direct transformations in the browser. Visit for example this [example XML file](https://oeuvres.github.io/teinte_xsl/tests/moliere_misanthrope.xml) under a web server, you should see a nicely formatted theatre play, even if it’s an [XML/TEI source](https://github.com/oeuvres/teinte_xsl/tests/moliere_misanthrope.xml).
 
-![Teinte xsl graph](docs/teinte_misanthrope.png)
+![Teinte xsl graph](doc/teinte_misanthrope.png)
 
 The magic rely on the XML prolog of the file
 
@@ -34,7 +34,7 @@ This is really useful for XML/TEI edition for local file. For security reasons, 
 3. search for the property: security.fileuri.strict_origin_policy
 4. set to false
 
-![Firefox fileuri](docs/firefox_fileuri.png)
+![Firefox fileuri](doc/firefox_fileuri.png)
 
 # Bash
 
