@@ -7,12 +7,12 @@ use Oeuvres\Kit\{Filesys, Log, LoggerCli};
 use Oeuvres\Teinte\Format\{Epub};
 
 Log::setLogger(new LoggerCli(LogLevel::DEBUG));
-
-$epub = new Epub();
 if (count($argv) < 2) {
-    return Log::warning("A filename is waited");
+    return Log::warning("A filename is waited as an argument");
 }
 $src_file = $argv[1];
+
+$epub = new Epub();
 $html_file = __DIR__ . "/out/" . pathinfo($src_file, PATHINFO_FILENAME) . ".html";
 Filesys::mkdir(dirname($html_file));
 $epub->load($src_file);
