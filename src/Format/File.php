@@ -9,7 +9,7 @@
 
 namespace Oeuvres\Teinte\Format;
 
-use Oeuvres\Kit\{Filesys, Log, Parse};
+use Oeuvres\Kit\{Filesys, I18n, Log, Parse};
 
 /**
  * A file, tools to read and write
@@ -22,6 +22,8 @@ class File
     private static array $ext2format = [];
     /** Properties for a format */
     private static array $formats = [];
+    /** Where is the xsl pack, set in one place, do not repeat */
+    static protected ?string $xsl_dir;
     /** filepath */
     protected ?string $file;
     /** filename without extension */
@@ -38,6 +40,8 @@ class File
         if (self::$init) return;
         self::$ext2format = Parse::json(file_get_contents(__DIR__ . '/ext2format.json'));
         self::$formats = Parse::json(file_get_contents(__DIR__ . '/formats.json'));
+        self::$xsl_dir = dirname(__DIR__) . "/xsl/";
+        I18n::load(dirname(__DIR__) . '/teinte_en.tsv');
         self::$init = true;
     }
 
@@ -89,11 +93,10 @@ class File
     /**
      * Load a file lazily, return nothing, used by child classes.
      */
-    public function load(string $file)
+    public function load(string $file): bool
     {
-        if (true !== ($ret = Filesys::readable($file))) {
-            Log::warning($ret);
-            // shall we send exception here ?
+        if (!Filesys::readable($file)) {
+            // Filesys logging
             return false;
         }
         // if file does not exists do something ?
@@ -101,6 +104,7 @@ class File
         $this->filename = pathinfo($file, PATHINFO_FILENAME);
         $this->filemtime = filemtime($file);
         $this->filesize = filesize($file); // ?? if URL ?
+        return true;
     }
 
     /**

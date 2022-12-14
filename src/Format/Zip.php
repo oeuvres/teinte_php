@@ -10,7 +10,7 @@
 namespace Oeuvres\Teinte\Format;
 
 use Exception, ZipArchive;
-use Oeuvres\Kit\{Check};
+use Oeuvres\Kit\{Check, I18n, Log};
 // required extension
 Check::extension('zip');
 
@@ -28,14 +28,44 @@ class Zip extends File
     /**
      * Open zip archive with tests
      */
-    public function open(): void
+    public function load(string $file): bool
     {
-        $this->zip = new ZipArchive();
-        if (!($this->zip->open($this->file) === TRUE)) {
-            throw new Exception ($this->file . ' seems not a valid zip archive');
+        if (!parent::load($file)) {
+            return false;
         }
+        $this->zip = new ZipArchive();
+        if (($ret = $this->zip->open($file)) !== TRUE) {
+            if ($ret == ZipArchive::ER_EXISTS) $mess = I18n::_('ZipArchive::ER_EXISTS', $file);
+            else if ($ret == ZipArchive::ER_INCONS) $mess = I18n::_('ZipArchive::ER_INCONS', $file);
+            else if ($ret == ZipArchive::ER_INVAL) $mess = I18n::_('ZipArchive::ER_INVAL', $file);
+            else if ($ret == ZipArchive::ER_MEMORY) $mess = I18n::_('ZipArchive::ER_MEMORY', $file);
+            else if ($ret == ZipArchive::ER_NOENT) $mess = I18n::_('ZipArchive::ER_NOENT', $file);
+            else if ($ret == ZipArchive::ER_NOZIP) $mess = I18n::_('ZipArchive::ER_NOZIP', $file);
+            else if ($ret == ZipArchive::ER_OPEN) $mess = I18n::_('ZipArchive::ER_OPEN', $file);
+            else if ($ret == ZipArchive::ER_READ) $mess = I18n::_('ZipArchive::ER_READ', $file);
+            else if ($ret == ZipArchive::ER_SEEK) $mess = I18n::_('ZipArchive::ER_SEAK', $file);
+            else $mess = I18n::_("“%s”, load error", $file);
+            // send an exception or just log ?
+            Log::warning($mess);
+            return false;
+        }
+        return true;
     }
 
+    /**
+     * Try to get entry, log nicely if error,
+     * 
+     */
+    public function get(string $name):?string
+    {
+        if (false === $this->zip->statName($name)) {
+            Log::warning(I18n::_('Zip.404', $this->file, $name));
+            return null;
+        }
+        // check if entry is empty ?
+        return $this->zip->getFromName($name);
+
+    }
 
     /**
      * Check if a zip file contains an entry by regex pattern

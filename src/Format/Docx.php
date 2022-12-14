@@ -1,18 +1,15 @@
-<?php
+<?php declare(strict_types=1);
 /**
- * Part of Teinte https://github.com/oeuvres/teinte
+ * Part of Teinte https://github.com/oeuvres/teinte_php
  * Copyright (c) 2022 frederic.glorieux@fictif.org
  * Copyright (c) 2013 frederic.glorieux@fictif.org & LABEX OBVIL
  * Copyright (c) 2012 frederic.glorieux@fictif.org
  * BSD-3-Clause https://opensource.org/licenses/BSD-3-Clause
  */
 
-declare(strict_types=1);
-
 namespace Oeuvres\Teinte\Format;
 
-use DOMDocument, Exception, ZipArchive;
-use ErrorException;
+use DOMDocument, ErrorException;
 use Oeuvres\Kit\{Filesys, Log, Parse, Xsl};
 
 
@@ -25,8 +22,6 @@ class Docx extends Zip
 {
     /** Avoid multiple initialisation */
     static private bool $init = false;
-    /** Where is the xsl pack, set in one place, do not repeat */
-    static protected ?string $xsl_dir;
     /** A search replace program */
     static protected ?array $preg;
     /** A user search replace program */
@@ -43,7 +38,6 @@ class Docx extends Zip
     {
         if (self::$init) return;
         parent::init();
-        self::$xsl_dir = dirname(__DIR__, 2) . "/src/xsl/";
         $pcre_tsv = self::$xsl_dir . 'docx/teilike_pcre.tsv';
         self::$preg = Parse::pcre_tsv($pcre_tsv);
         self::$init = true;
@@ -87,7 +81,7 @@ class Docx extends Zip
      */
     function pkg(): void
     {
-        if (null === $this->zip) $this->open();
+        // should have been loaded here
         // concat XML files sxtracted, without XML prolog
         $this->xml = '<?xml version="1.0" encoding="UTF-8"?>
 <pkg:package xmlns:pkg="http://schemas.microsoft.com/office/2006/xmlPackage">
@@ -120,7 +114,7 @@ class Docx extends Zip
                 else Log::debug($m);
                 continue;
             }
-            // delete different things for a lighter do
+            // delete xml prolog
             $content = preg_replace(
                 [
                     "/\s*<\?xml[^\?>]*\?>\s*/",
