@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-include_once(dirname(__DIR__) . '/php/autoload.php');
+include_once(dirname(__DIR__) . '/vendor/autoload.php');
 
 use Oeuvres\Teinte\{Tei2docx, TeiExporter};
 use Oeuvres\Kit\LoggerCli;

@@ -1,5 +1,7 @@
 /vendor
 composer.lock
+/examples/data/_*
+/examples/out/
 
 # generated garbage (especially LaTeX)
 .~*
