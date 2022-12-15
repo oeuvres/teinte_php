@@ -20,6 +20,6 @@
             "Oeuvres\\Teinte\\": "src"
         }
     },
-    "bin": ["teinte"],
+    "bin": ["bin/teinte"],
     "minimum-stability": "dev"
 }
