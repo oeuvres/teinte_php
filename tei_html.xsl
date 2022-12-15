@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Part of Teinte https://github.com/oeuvres/teinte
+Part of Teinte suite https://github.com/oeuvres/teinte_xsl
 BSD-3-Clause https://opensource.org/licenses/BSD-3-Clause
 © 2019 Frederic.Glorieux@fictif.org & LABEX OBVIL & Optéos
 © 2013 Frederic.Glorieux@fictif.org & LABEX OBVIL
@@ -9,7 +9,7 @@ BSD-3-Clause https://opensource.org/licenses/BSD-3-Clause
 © 2007 Frederic.Glorieux@fictif.org
 © 2005 ajlsm.com (Cybertheses)
 
-XSLT 1.0 is compatible browser, PHP, Python, Java…
+XSLT 1.0, compatible browser, PHP, Python, Java…
 -->
 <xsl:transform version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" xmlns:tei="http://www.tei-c.org/ns/1.0" exclude-result-prefixes="tei">
   <xsl:include href="tei_html/tei_flow_html.xsl"/>
@@ -20,17 +20,7 @@ XSLT 1.0 is compatible browser, PHP, Python, Java…
   <xsl:param name="xslbase">
     <xsl:call-template name="xslbase"/>
   </xsl:param>
-  <xsl:param name="theme">
-    <xsl:choose>
-      <!-- https://oeuvres.github.io -->
-      <xsl:when test="true()">../../teinte_theme/</xsl:when>
-      <xsl:when test="$xslbase != ''">
-        <xsl:value-of select="$xslbase"/>
-        <xsl:text>theme/</xsl:text>
-      </xsl:when>
-      <xsl:otherwise>https://oeuvres.github.io/teinte/theme/</xsl:otherwise>
-    </xsl:choose>
-  </xsl:param>
+  <xsl:param name="theme">https://oeuvres.github.io/teinte_theme/</xsl:param>
   <!-- used as a body class -->
   <xsl:param name="folder"/>
   <!--  -->

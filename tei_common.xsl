@@ -976,25 +976,28 @@ Could be correct for a text only version in <xsl:value-of select=""/>
           </xsl:choose>
         </xsl:variable>
         <xsl:variable name="title">
-          <xsl:if test="@n and not(tei:head)">
-            <xsl:value-of select="@n"/>
-            <xsl:text> </xsl:text>
-          </xsl:if>
-          <!-- [not(@type='kicker')] -->
-          <xsl:for-each select="tei:head[not(@type='sub')][not(@type='subtitle')]">
-            <xsl:apply-templates mode="title" select="."/>
-            <xsl:if test="position() != last()">
-              <!-- test if title end by ponctuation -->
-              <xsl:variable name="norm" select="normalize-space(.)"/>
-              <xsl:variable name="last" select="substring($norm, string-length($norm))"/>
-              <xsl:choose>
-                <xsl:when test="translate($last, '.;:?!»', '')!=''">. </xsl:when>
-                <xsl:otherwise>
-                  <xsl:text> </xsl:text>
-                </xsl:otherwise>
-              </xsl:choose>
-            </xsl:if>
-          </xsl:for-each>
+          <xsl:choose>
+            <xsl:when test="@n != '' and not(tei:head)">
+              <xsl:value-of select="normalize-space(@n)"/>
+            </xsl:when>
+            <xsl:otherwise>
+              <!-- allow @type='kicker' for toc -->
+              <xsl:for-each select="tei:head[not(@type='sub')][not(@type='subtitle')]">
+                <xsl:apply-templates mode="title" select="."/>
+                <xsl:if test="position() != last()">
+                  <!-- test if title end by ponctuation -->
+                  <xsl:variable name="norm" select="normalize-space(.)"/>
+                  <xsl:variable name="last" select="substring($norm, string-length($norm))"/>
+                  <xsl:choose>
+                    <xsl:when test="translate($last, '.;:?!»', '')!=''">. </xsl:when>
+                    <xsl:otherwise>
+                      <xsl:text> </xsl:text>
+                    </xsl:otherwise>
+                  </xsl:choose>
+                </xsl:if>
+              </xsl:for-each>
+            </xsl:otherwise>
+          </xsl:choose>
         </xsl:variable>
         <xsl:copy-of select="$title"/>
         <!-- Afficher un Byline en TOC ?
@@ -1523,7 +1526,7 @@ Le mode label génère un intitulé court obtenu par une liste de valeurs locali
   
   <!-- In case of direct XSLT transformation in browser, get the folder -->
   <xsl:template name="xslbase">
-    <xsl:param name="path" select="/processing-instruction('xml-stylesheet')[contains(., 'xsl')]"/>
+    <xsl:param name="path" select="/processing-instruction('xml-stylesheet')[contains(., '.xsl')]"/>
     <xsl:choose>
       <xsl:when test="contains($path, 'href=&quot;')">
         <xsl:call-template name="xslbase">
