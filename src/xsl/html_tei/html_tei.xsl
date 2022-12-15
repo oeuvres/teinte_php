@@ -4,21 +4,27 @@
   xmlns:epub="http://www.idpf.org/2007/ops"
   
   xmlns:html="http://www.w3.org/1999/xhtml"
-  exclude-result-prefixes="html epub"
+  xmlns:teinte="https://oeuvres.github.io/teinte"
+  xmlns:opf="http://www.idpf.org/2007/opf"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:dcterms="http://purl.org/dc/terms/"
+  
+  exclude-result-prefixes="dc dcterms html epub opf teinte"
   xmlns:exslt="http://exslt.org/common"
   xmlns:date="http://exslt.org/dates-and-times"
   xmlns:php="http://php.net/xsl"
   extension-element-prefixes="date exslt php"
   >
+  <xsl:include href="epub_dc_tei.xsl"/>
   <xsl:output indent="yes" encoding="UTF-8" method="xml" omit-xml-declaration="yes"/>
   <xsl:variable name="lf" select="'&#10;'"/>
   <!-- 1234567890 -->
   <xsl:variable name="ÂBC">ABCDEFGHIJKLMNOPQRSTUVWXYZÀÂÄÆÇÉÈÊËÎÏÑÔÖŒÙÛÜ _-,</xsl:variable>
-  <xsl:variable name="âbc">abcdefghijklmnopqrstuvwxyzàâäæçéèêëîïñôöœùûü</xsl:variable>
-  <xsl:variable name="abc">abcdefghijklmnopqrstuvwxyzaaaeceeeeiinooeuuu</xsl:variable>
+  <xsl:variable name="âbc">abcdefghijklmnopqrstuvwxyzàâäæçéèêëîïñôöœùûü </xsl:variable>
+  <xsl:variable name="abc">abcdefghijklmnopqrstuvwxyzaaaeceeeeiinooeuuu </xsl:variable>
+  <!-- A key maybe used on styles for perfs -->
   <xsl:variable name="sheet" select="document('styles.xml', document(''))"/>
-  
-
+  <xsl:key name="class" match="teinte:class" use="@name"/>
   <xsl:template match="html:*">
     <xsl:element name="{local-name()}">
       <xsl:apply-templates select="node() | @*"/>
@@ -38,11 +44,13 @@
 STRUCTURE
 -->
   <xsl:template match="html:html">
-    <xsl:processing-instruction name="xml-model"> href="http://oeuvres.github.io/Teinte/teinte.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"</xsl:processing-instruction>
+    <xsl:processing-instruction name="xml-model"> href="http://oeuvres.github.io/teinte/teinte.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"</xsl:processing-instruction>
+    <xsl:text>&#10;</xsl:text>
+    <xsl:processing-instruction name="xml-stylesheet"> type="text/xsl" href="https://oeuvres.github.io/teinte_xsl/tei_html.xsl"</xsl:processing-instruction>
     <xsl:if test="function-available('date:date-time')">
       <xsl:value-of select="$lf"/>
       <xsl:comment>
-        <xsl:text>Html2tei: </xsl:text>
+        <xsl:text>html_tei: </xsl:text>
         <xsl:value-of select="date:date-time()"/>
       </xsl:comment>
     </xsl:if>
@@ -52,24 +60,53 @@ STRUCTURE
     </TEI>
   </xsl:template>
   <xsl:template match="html:head">
-    <teiHeader>
-      <xsl:apply-templates select="node() | @*"/>
-    </teiHeader>
+      <xsl:choose>
+        <!-- an epub export -->
+        <xsl:when test=".//*[dc:*|dcterms:*]">
+          <xsl:for-each select="(.//*[dc:*|dcterms:*])[1]">
+            <xsl:call-template name="opf:teiHeader"/>
+          </xsl:for-each>
+        </xsl:when>
+        <xsl:otherwise>
+          <teiHeader>
+            <xsl:apply-templates/>
+          </teiHeader>
+        </xsl:otherwise>
+      </xsl:choose>
   </xsl:template>
   <xsl:template match="html:body">
     <text>
       <xsl:apply-templates select="@*"/>
       <body>
-        <div>
-          <xsl:apply-templates/>
-        </div>
+        <xsl:apply-templates/>
       </body>
     </text>
   </xsl:template>
+  
+  <xsl:template name="mixed">
+    <xsl:variable name="text">
+      <xsl:for-each select="text()">
+        <!-- teste, normalize is faster here -->
+        <xsl:value-of select="normalize-space(.)"/>
+      </xsl:for-each>
+    </xsl:variable>
+    <xsl:value-of select="$text"/>
+  </xsl:template>
+
   <xsl:template match="html:section | html:article">
     <div type="{local-name()}">
       <xsl:apply-templates select="@*"/>
-      <xsl:apply-templates/>
+      <xsl:variable name="mixed">
+        <xsl:call-template name="mixed"/>
+      </xsl:variable>
+      <xsl:choose>
+        <xsl:when test="$mixed = '' and count(*) = 1 and html:div">
+          <xsl:apply-templates select="html:div/node()"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:apply-templates/>
+        </xsl:otherwise>
+      </xsl:choose>
     </div>
   </xsl:template>
   <xsl:template match="html:img">
@@ -77,44 +114,93 @@ STRUCTURE
       <xsl:copy-of select="@*"/>
     </graphic>
   </xsl:template>
-  <!-- no hierachical grouping ? -->
+  
+  <xsl:template name="map_xml">
+    <xsl:param name="map_class"/>
+    <xsl:if test="normalize-space($map_class) = ''">
+      <xsl:message terminate="yes">map_xml, dev error $map_class='<xsl:value-of select="$map_class"/>'</xsl:message>
+    </xsl:if>
+    <xsl:variable name="map_tei">
+      <xsl:for-each select="$sheet">
+        <xsl:value-of select="key('class', $map_class)[1]/@tei"/>
+      </xsl:for-each>
+    </xsl:variable>
+    <xsl:if test="normalize-space($map_tei) = ''">
+      <xsl:message terminate="yes">map_xml, dev error no mapping found for $map_class='<xsl:value-of select="$map_class"/>'</xsl:message>
+    </xsl:if>
+    <xsl:element name="{$map_tei}">
+      <xsl:variable name="map_rend">
+        <xsl:for-each select="$sheet">
+          <xsl:value-of select="key('class', $map_class)[1]/@rend"/>
+        </xsl:for-each>
+      </xsl:variable>
+      <xsl:if test="$map_rend != ''">
+        <xsl:attribute name="rend">
+          <xsl:value-of select="$map_rend"/>
+        </xsl:attribute>
+      </xsl:if>
+      <xsl:variable name="map_type">
+        <xsl:for-each select="$sheet">
+          <xsl:value-of select="key('class', $map_class)[1]/@type"/>
+        </xsl:for-each>
+      </xsl:variable>
+      <xsl:if test="$map_type != ''">
+        <xsl:attribute name="type">
+          <xsl:value-of select="$map_type"/>
+        </xsl:attribute>
+      </xsl:if>
+      <xsl:apply-templates/>
+    </xsl:element>
+  </xsl:template>
+  
+  <!-- 
+  Test if div is a hierarchical grouping a false para
+  -->
   <xsl:template match="html:div">
     <xsl:variable name="class" select="translate(@class, $ÂBC, $abc)"/>
     <xsl:variable name="id" select="translate(@id, $ÂBC, $abc)"/>
-    <xsl:variable name="mapping" select="$sheet/*/*[@name=$class or @id=$id][not(@html) or @html='div'][1]"/>
+    <xsl:variable name="map_class">
+      <xsl:call-template name="map_class"/>
+    </xsl:variable>
     <xsl:variable name="mixed">
-      <xsl:for-each select="text()">
-        <xsl:value-of select="normalize-space(.)"/>
-      </xsl:for-each>
+      <xsl:call-template name="mixed"/>
     </xsl:variable>
     <xsl:choose>
-      <xsl:when test="normalize-space(.) = ''"/>
-      <xsl:when test="$mixed = '' and not(*[local-name() != 'img'])"/>
-      <xsl:when test="$mapping">
-        <xsl:call-template name="mapping">
-          <xsl:with-param name="mapping" select="$mapping"/>
+      <!-- image container -->
+      <xsl:when test="$mixed = '' and count(*) = 1 and html:img">
+        <figure>
+          <xsl:apply-templates/>
+        </figure>
+      </xsl:when>
+      <!-- class name with mapped element -->
+      <xsl:when test="$map_class != ''">
+        <xsl:call-template name="map_xml">
+          <xsl:with-param name="class" select="$map_class"/>
         </xsl:call-template>
       </xsl:when>
-      <xsl:when test="$mixed = '' and count(*) = 1 and *[@class='pagenum']">
-        <xsl:apply-templates/>
-      </xsl:when>
-      <xsl:when test="$class = 'strophe' or $class = 'strophec' or $class = 'lg' or $class = 'stanza'">
-        <lg>
-          <xsl:apply-templates select="@*[name() != 'class']"/>
+      <!-- probably paragraph -->
+      <xsl:when test="$mixed != ''">
+        <p>
+          <xsl:apply-templates select="@*"/>
           <xsl:apply-templates/>
-        </lg>
+        </p>
       </xsl:when>
-      <xsl:when test="$class = 'quote' or $class = 'quotec' ">
+      <xsl:when test="$mixed = '' and count(*) = 1 and html:i">
+        <p>
+          <xsl:apply-templates select="@*"/>
+          <xsl:call-template name="rend">
+            <xsl:with-param name="suffix">i</xsl:with-param>
+          </xsl:call-template>
+          <xsl:apply-templates select="html:i/node()"/>
+        </p>
+      </xsl:when>
+
+      <xsl:otherwise>
         <quote>
           <xsl:apply-templates select="@*"/>
+          <xsl:attribute name="type">div</xsl:attribute>
           <xsl:apply-templates/>
         </quote>
-      </xsl:when>
-      <xsl:otherwise>
-        <div>
-          <xsl:apply-templates select="@*"/>
-          <xsl:apply-templates/>
-        </div>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
@@ -193,47 +279,32 @@ BLOCKS
   <xsl:template match="html:p">
     <xsl:variable name="class" select="translate(@class, $ÂBC, $abc)"/>
     <xsl:variable name="id" select="translate(@id, $ÂBC, $abc)"/>
-    <xsl:variable name="mapping" select="$sheet/*/*[@name=$class or @id=$id][not(@html) or @html='p'][1]"/>
-    <xsl:variable name="mixed">
-      <xsl:for-each select="text()">
-        <xsl:value-of select="normalize-space(.)"/>
-      </xsl:for-each>
+    <xsl:variable name="map_class">
+      <xsl:call-template name="map_class"/>
     </xsl:variable>
-    <!-- vu où ? -->
-    <xsl:if test="contains(@class, 'p2')">
-      <p/>
-    </xsl:if>
+    <xsl:variable name="mixed">
+      <xsl:call-template name="mixed"/>
+    </xsl:variable>
     <xsl:choose>
-      <xsl:when test="normalize-space(.) = '' and not(*[local-name != 'img'])">
+      <!-- ??
+      <xsl:when test="$mixed = '' and normalize-space(.) = '' and not(*[local-name != 'img'])">
         <xsl:apply-templates/>
       </xsl:when>
+      -->
       <xsl:when test="$mixed = '' and count(*) = 1 and *[@class='pagenum']">
         <xsl:apply-templates/>
       </xsl:when>
-      <xsl:when test="$mapping">
-        <xsl:call-template name="mapping">
-          <xsl:with-param name="mapping" select="$mapping"/>
+      <!-- class name with mapped element -->
+      <xsl:when test="$map_class != ''">
+        <xsl:call-template name="map_xml">
+          <xsl:with-param name="class" select="$map_class"/>
         </xsl:call-template>
       </xsl:when>
+      <!-- bad practice but seen -->
       <xsl:when test="ancestor::html:div[@class='poetry' or @class='stanza' or @class='poem' or @class='strophe' or @class='strophec'] ">
         <l>
           <xsl:apply-templates select="node()|@*"/>
         </l>
-      </xsl:when>
-      <xsl:when test=" $class = 'hsub' or $class = 'hsubc'">
-        <head type="sub">
-          <xsl:apply-templates select="@*[name() != 'class'] | node()"/>
-        </head>
-      </xsl:when>
-      <xsl:when test=" $class = 'sig' or $class = 'signed' ">
-        <signed>
-          <xsl:apply-templates select="@* | node()"/>
-        </signed>
-      </xsl:when>
-      <xsl:when test=" $class = 'titre' ">
-        <label>
-          <xsl:apply-templates select="@* | node()"/>
-        </label>
       </xsl:when>
       <xsl:otherwise>
         <p>
@@ -270,10 +341,10 @@ PHRASES
     </hi>
   </xsl:template>
   <xsl:template match="html:i">
-    <emph>
+    <hi>
       <xsl:apply-templates select="@*"/>
       <xsl:apply-templates/>
-    </emph>
+    </hi>
   </xsl:template>
   <!-- -->
   <xsl:template match="html:sup">
@@ -299,24 +370,71 @@ PHRASES
     <xsl:value-of select="$lf"/>
     <lb/>
   </xsl:template>
+  
+  <!-- get an element name from a class name -->
+  <xsl:template name="map_class">
+    <xsl:param name="class" select="normalize-space(translate(@class, $ÂBC, $abc))"/>
+    <xsl:variable name="map_class">
+      <xsl:variable name="txt">
+        <xsl:call-template name="map_loop">
+          <xsl:with-param name="class" select="$class"/>
+        </xsl:call-template>
+      </xsl:variable>
+      <xsl:value-of select="normalize-space($txt)"/>
+    </xsl:variable>
+    <!-- multiple class can match more than el, choose first -->
+    <xsl:value-of select="substring-before(concat($map_class, ' '), ' ')"/>
+  </xsl:template>
+  
+  <xsl:template name="map_loop">
+    <xsl:param name="class"/>
+    <xsl:choose>
+      <xsl:when test="normalize-space($class = '')"/>
+      <xsl:when test="contains($class, ' ')">
+        <xsl:call-template name="map_loop">
+          <xsl:with-param name="class" select="substring-before($class, ' ')"/>
+        </xsl:call-template>
+        <xsl:call-template name="map_loop">
+          <xsl:with-param name="class" select="substring-after($class, ' ')"/>
+        </xsl:call-template>
+      </xsl:when>
+      <!-- simple class search in list -->
+      <xsl:otherwise>
+        <xsl:for-each select="$sheet">
+          <xsl:if test="count(key('class', $class)) &gt; 0">
+            <xsl:value-of select="$class"/>
+          </xsl:if>
+          <xsl:text> </xsl:text>
+        </xsl:for-each>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+  
+  <!-- 
+  Non semantic html element, try to translate
+  -->
   <xsl:template match="html:span">
     <xsl:variable name="class" select="translate(@class, $ÂBC, $abc)"/>
     <xsl:variable name="id" select="translate(@id, $ÂBC, $abc)"/>
-    <xsl:variable name="mapping" select="$sheet/*/*[@name=$class or @id=$id][not(@html) or @html='span'][1]"/>
+    <xsl:variable name="map_class">
+      <xsl:call-template name="map_class"/>
+    </xsl:variable>
+
     <xsl:choose>
+      <!-- specific not well handle by mapping -->
+      <xsl:when test="contains(@class, 'pagenum')">
+        <pb n="{@id}"/>
+      </xsl:when>
+      <xsl:when test="$map_class != ''">
+        <xsl:call-template name="map_xml">
+          <xsl:with-param name="map_class" select="$map_class"/>
+        </xsl:call-template>
+      </xsl:when>
       <!-- span class="i3 smcap" -->
       <xsl:when test="contains(@class, 'smcap') and ancestor::*[@class='quote']">
         <author>
           <xsl:apply-templates/>
         </author>
-      </xsl:when>
-      <xsl:when test="contains(@class, 'pagenum')">
-        <pb n="{@id}"/>
-      </xsl:when>
-      <xsl:when test="$mapping">
-        <xsl:call-template name="mapping">
-          <xsl:with-param name="mapping" select="$mapping"/>
-        </xsl:call-template>
       </xsl:when>
       <xsl:when test=". = ''">
         <xsl:apply-templates/>
@@ -473,11 +591,25 @@ PHRASES
   </xsl:template>
   
   <xsl:template match="@class">
-    <xsl:attribute name="rend">
-      <xsl:value-of select="translate(., $ÂBC, $abc)"/>
-    </xsl:attribute>
+    <xsl:param name="class" select="normalize-space(translate(., $ÂBC, $abc))"/>
+    <xsl:if test="$class != ''">
+      <xsl:attribute name="rend">
+        <xsl:value-of select="$class"/>
+      </xsl:attribute>
+    </xsl:if>
   </xsl:template>
-  
+
+  <xsl:template name="rend">
+    <xsl:param name="suffix"/>
+    <xsl:param name="class" select="translate(@class, $ÂBC, $abc)"/>
+    <xsl:variable name="rend" select="normalize-space(concat($class, ' ', $suffix))"/>
+    <xsl:if test="$rend != ''">
+      <xsl:attribute name="rend">
+        <xsl:value-of select="$rend"/>
+      </xsl:attribute>
+    </xsl:if>
+  </xsl:template>
+
   <xsl:template match="@lang">
     <xsl:attribute name="xml:lang">
       <xsl:value-of select="."/>
@@ -504,29 +636,7 @@ PHRASES
       </xsl:attribute>
     </xsl:if>
   </xsl:template>
-    <!-- A counting template to produce inlines -->
-  <xsl:template name="divClose">
-    <xsl:param name="n"/>
-    <xsl:choose>
-      <xsl:when test="$n &gt; 0">
-        <xsl:processing-instruction name="div">/</xsl:processing-instruction>
-        <xsl:call-template name="divClose">
-          <xsl:with-param name="n" select="$n - 1"/>
-        </xsl:call-template>
-      </xsl:when>
-    </xsl:choose>
-  </xsl:template>
-  <xsl:template name="divOpen">
-    <xsl:param name="n"/>
-    <xsl:choose>
-      <xsl:when test="$n &gt; 0">
-        <xsl:processing-instruction name="div"/>
-        <xsl:call-template name="divOpen">
-          <xsl:with-param name="n" select="$n - 1"/>
-        </xsl:call-template>
-      </xsl:when>
-    </xsl:choose>
-  </xsl:template>
+
   <xsl:template name="debug">
     <xsl:for-each select="ancestor-or-self::*">
       <xsl:text>/</xsl:text>
