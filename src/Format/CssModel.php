@@ -25,7 +25,7 @@ namespace Oeuvres\Teinte\Format;
  * https://github.com/sabberworm/PHP-CSS-Parser
  * 
  */
-class CssFilter
+class CssModel
 {
     /** A filter of rules */
     private array $filter = [
@@ -46,9 +46,26 @@ class CssFilter
     /**
      * Return model in its state
      */
-    public function model(): array
+    public function asArray(): array
     {
         return $this->model;
+    }
+
+    /**
+     * Return model as an XML 
+     */
+    public function asXml(): string
+    {
+        $xml = "<css>\n";
+        foreach($this->model as $selector => $decls) {
+            $xml .= "  <rule selector=\"$selector\">\n";
+            foreach($decls as $property => $value) {
+                $xml .= "    <declaration property=\"$property\" value=\"$value\"/>\n";
+            }
+            $xml .= "  </rule>\n";
+        }
+        $xml .= "</css>\n";
+        return $xml;
     }
 
     /**

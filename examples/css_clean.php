@@ -8,7 +8,7 @@ include_once(dirname(__DIR__) . '/vendor/autoload.php');
 
 use Psr\Log\LogLevel;
 use Oeuvres\Kit\{Filesys, Log, LoggerCli};
-use Oeuvres\Teinte\Format\{CssFilter};
+use Oeuvres\Teinte\Format\{CssModel};
 
 Log::setLogger(new LoggerCli(LogLevel::DEBUG));
 if (count($argv) < 2) {
@@ -16,7 +16,7 @@ if (count($argv) < 2) {
 }
 $src_file = $argv[1];
 
-$css = new CssFilter();
+$css = new CssModel();
 $css->load($src_file);
-print_r($css->model());
-
+print_r($css->asArray());
+echo $css->asXml();

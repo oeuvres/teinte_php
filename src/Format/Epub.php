@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Oeuvres\Teinte\Format;
 
-use DOMDocument, DOMNodeList, DOMXpath;
+use DOMDocument, DOMElement, DOMNode, DOMNodeList, DOMXpath;
 use Oeuvres\Kit\{Check, I18n, Log, Xsl};
 
 
@@ -33,11 +33,13 @@ class Epub extends Zip
     /** xpath version of the opf */
     private ?DOMXpath $opf_xpath;
     /**  html to concat */
-    private ?string $html;
+    private string $html;
     /** manifest of resources, map id => path */
     private $manifest = [];
     /** spine in order */
     private $spine = [];
+    /** A css model with semantic properties */
+    private CssModel $style;
     /** Config for tidy html, used for inserted fragments: http://tidy.sourceforge.net/docs/quickref.html */
     public static $tidyconf = array(
         // will strip all unknown tags like <svg> or <section>
@@ -59,11 +61,21 @@ class Epub extends Zip
         'show-body-only' => true,
     );
 
+    public function __construct()
+    {
+        $this->style = new CssModel();
+        $this->html = '';
+        // temp
+        self::$xsl_dir = dirname(__DIR__, 3) . '/teinte_xsl/';
+    }
+
     /**
      * Load and check
      */
     public function load(string $file): bool
     {
+        $this->style = new CssModel();
+        $this->html = '';
         $this->chops = 0;
         if (!parent::load($file)) {
             return false;
@@ -96,40 +108,68 @@ class Epub extends Zip
         if (!$ok) return false;
         $this->opf_xpath = new DOMXpath($this->opf_dom);
         $this->opf_xpath->registerNamespace("opf", "http://www.idpf.org/2007/opf");
+        // read resources
+        $this->manifest();
+        $this->spine();
+        
         return true;
     }
 
     /**
      * Build an HTML File
      */
-    public function html()
+    public function html(): ?string
     {
-        // charger le container opf, contient les métadonnées et autres liens
-
+        if (!isset($this->opf_dom)) {
+            Log::error(I18n::_('Epub.load'));
+            return null;
+        }
         $this->html = '<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"
-  xmlns:dc="http://purl.org/dc/elements/1.1/"
-  xmlns:dcterms="http://purl.org/dc/terms/"
-  xmlns:epub="http://www.idpf.org/2007/ops"
-  xmlns:opf="http://www.idpf.org/2007/opf"
 >
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 ';
         $metadata = $this->opf_dom->getElementsByTagName('metadata')->item(0);
-        // TODO, better work on meta
-        $this->html .= $this->opf_dom->saveXML($metadata);
+        // keep source metada 
+        $this->html .= "\n<template id=\"metadata\">\n\n" . $this->opf_dom->saveXML($metadata) . "\n\n</template>\n" ;
+
+        $this->html .= "\n<template id=\"css\">\n\n" . $this->style->asXml() ."\n</template>\n" ;
         $this->html .= '
   </head>
   <body>
 ';
-        // parse toc and spline
         $this->read();
         $this->html .= '
   </body>
 </html>
 ';
-        return $this->html;
+        $dom = Xsl::loadXml($this->html);
+        $html = Xsl::transformToXml(
+            self::$xsl_dir . 'html_tei/epub_teinte_html.xsl', 
+            $dom
+        );
+        $this->html = "<!DOCTYPE html>\n" . $html;
+        return $html;
+    }
+    
+
+    /**
+     * transform to TEI
+     */
+    public function tei(): ?string
+    {
+        if (!$this->html) {
+            $this->html();
+            // something went wrong here
+            if (!$this->html) return null;
+        }
+        $dom = Xsl::loadXml($this->html);
+        $xml = Xsl::transformToXml(
+            self::$xsl_dir . 'html_tei/html_tei.xsl', 
+            $dom
+        );
+        return $xml;
     }
 
     /**
@@ -141,11 +181,8 @@ class Epub extends Zip
         if (!$ncx_xml) return false;
         // $this->html .= $ncx_xml;
         $ncx_dom = Xsl::loadXml($ncx_xml);
-        // read the toc needs spine that needs manifest
-        $this->manifest();
-        $this->spine();
         // get an html from the toc
-        $sections = Xsl::transformToXml(dirname(__DIR__).'/ncx_html.xsl', $ncx_dom);
+        $sections = Xsl::transformToXml(self::$xsl_dir.'html_tei/ncx_html.xsl', $ncx_dom);
         $sections = preg_replace(
             ["/<body[^>]*>/", "/<\/body>/"],
             ["", ""],
@@ -190,16 +227,22 @@ class Epub extends Zip
     }
 
     /**
-     * populate the manifest table
+     * populate the manifest table, and populate a css model
      */
     private function manifest()
     {
+        $this->style = new CssModel();
         $nl = $this->opf_dom->getElementsByTagName('manifest');
         foreach ($nl->item(0)->childNodes as $node) {
             if ($node->nodeType != XML_ELEMENT_NODE) continue;
-            // test media-type ?
             $id = $node->getAttribute("id");
             $href = $node->getAttribute("href");
+            $type = $node->getAttribute("media-type");
+            if ($type == "text/css") {
+                $css = $this->get($this->opf_dir . $href);
+                $this->style->parse($css);
+                Log::debug("load css $this->opf_dir$href");
+            }
             $this->manifest[$id] = $href;
         }
     }
@@ -220,8 +263,12 @@ class Epub extends Zip
             Log::warning(I18n::_('Epub.ncx400', $this->file, $this->opf_path));
             return null;
         }
-        $ncx_path = $nl->item(0)->getAttribute("href");
-        $ncx_path = urldecode($ncx_path);
+        $ncx_el = self::cast_el($nl->item(0));
+        if (!$ncx_el || !$ncx_el->hasAttribute("href")) {
+            Log::warning(I18n::_('Epub.ncx400', $this->file, $this->opf_path));
+            return null;
+        }
+        $ncx_path = urldecode($ncx_el->getAttribute("href"));
         if ($ncx_path[0] != "/") $ncx_path = $this->opf_dir . $ncx_path;
         $this->ncx_dir = dirname($ncx_path);
         if ($this->ncx_dir == ".") $this->ncx_dir = "";
@@ -229,6 +276,15 @@ class Epub extends Zip
         return $this->get($ncx_path);
     }
 
+    /**
+     * A workaround for a casting error with DOMNodeList
+     */
+    static public function cast_el(DOMNode $node): DOMElement
+    {
+        if (!$node) return null;
+        if ($node->nodeType !== XML_ELEMENT_NODE) return null;
+        return $node;
+    }
 
 
     /**
