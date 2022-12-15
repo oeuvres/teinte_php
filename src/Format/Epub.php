@@ -65,8 +65,8 @@ class Epub extends Zip
     {
         $this->style = new CssModel();
         $this->html = '';
-        // temp
-        self::$xsl_dir = dirname(__DIR__, 3) . '/teinte_xsl/';
+        // useful for dev
+        // self::$xsl_dir = dirname(__DIR__, 3) . '/teinte_xsl/';
     }
 
     /**
