@@ -41,12 +41,14 @@ class Xml extends File
     /**
      * Load XML/TEI as a file (preferred way to hav some metas).
      */
-    public function load(string $src_file): DOMDocument
+    public function load(string $src_file): bool
     {
-        parent::{__FUNCTION__}(...func_get_args());
+        if (!parent::{__FUNCTION__}(...func_get_args())) {
+            return false;
+        }
         $this->xpath = null;
-        $dom = $this->loadXml(file_get_contents($src_file));
-        return $dom;
+        $this->dom = $this->loadXml($this->contents());
+        return true;
     }
 
     /**
@@ -78,7 +80,7 @@ class Xml extends File
      */
     public function xpath()
     {
-        if ($this->xpath) return $this->xpath;
+        if (isset($this->xpath) && $this->xpath) return $this->xpath;
         $this->xpath = Xsl::xpath($this->dom);
         return $this->xpath;
     }

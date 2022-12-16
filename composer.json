@@ -11,8 +11,7 @@
     "license": "BSD-3-Clause",
     "require": {
         "php": ">=7.2",
-        "erusev/parsedown": "^1.7",
-        "erusev/parsedown-extra": "^0.8.1",
+        "erusev/parsedown-extra": "dev-master",
         "oeuvres/kit": "dev-main"
     },
     "autoload": {
