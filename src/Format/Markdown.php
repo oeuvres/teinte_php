@@ -33,6 +33,9 @@ class Markdown extends File
         if (self::$init) return;
         self::$parser = new ParsedownExtra();
         self::$init = true;
+        // useful for dev
+        // self::$xsl_dir = dirname(__DIR__, 3) . '/teinte_xsl/';
+
     }
 
     /**
