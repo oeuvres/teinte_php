@@ -148,36 +148,6 @@ class Epub extends Zip
             self::$xsl_dir . 'html_tei/epub_teinte_html.xsl', 
             $dom
         );
-
-        /*
-        $this->html = '<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml"
->
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-';
-        $metadata = $this->opf_dom->getElementsByTagName('metadata')->item(0);
-        // keep source metada 
-        $this->html .= "\n<template id=\"metadata\">\n\n" . $this->opf_dom->saveXML($metadata) . "\n\n</template>\n" ;
-
-        $this->html .= "\n<template id=\"css\">\n\n" . $this->style->asXml() ."\n</template>\n" ;
-        $this->html .= '
-  </head>
-  <body>
-';
-        $this->read();
-        $this->html .= '
-  </body>
-</html>
-';
-        $dom = Xsl::loadXml($this->html);
-        $html = Xsl::transformToXml(
-            self::$xsl_dir . 'html_tei/epub_teinte_html.xsl', 
-            $dom
-        );
-        $this->html = "<!DOCTYPE html>\n" . $html;
-        return $html;
-        */
     }
     
     /**
@@ -217,7 +187,7 @@ class Epub extends Zip
     /**
      * transform to TEI
      */
-    public function tei(): ?string
+    public function teiToDoc(): ?DOMDocument
     {
         // ensure html generation
         $this->dom();
@@ -241,6 +211,12 @@ class Epub extends Zip
         $first = self::elder($dom->documentElement);
         $dom->documentElement->insertBefore($teiHeader, $first);
         $dom->formatOutput = true;
+        return $dom;
+    }
+
+    public function tei(): ?string
+    {
+        $dom = $this->teiToDoc();
         return $dom->saveXML();
     }
 
