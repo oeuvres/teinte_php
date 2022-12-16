@@ -1143,14 +1143,14 @@ Tables
           </xsl:apply-templates>
         </span>
       </xsl:when>
-      <!-- sinon appeler le span général -->
+      <!-- maybe tei genrated from html mess, thing like <i rend="t15"></i> -->
       <xsl:otherwise>
-        <span>
+        <i>
           <xsl:call-template name="atts"/>
           <xsl:apply-templates>
             <xsl:with-param name="from" select="$from"/>
           </xsl:apply-templates>
-        </span>
+        </i>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
