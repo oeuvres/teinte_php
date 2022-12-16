@@ -51,12 +51,19 @@ XSLT 1.0, compatible browser, PHP, Python, Java…
         <xsl:with-param name="class" select="$class"/>
       </xsl:call-template>
       <aside class="toc">
-        <xsl:if test="count(.//tei:head) &gt; 2">
+        <xsl:variable name="toc">
           <nav>
             <xsl:call-template name="toc"/>
           </nav>
-        </xsl:if>
-        <xsl:text> </xsl:text>
+        </xsl:variable>
+        <xsl:choose>
+          <xsl:when test="$toc != ''">
+            <xsl:copy-of select="$toc"/>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:text> </xsl:text>
+          </xsl:otherwise>
+        </xsl:choose>
       </aside>
       <div class="main">
         <xsl:apply-templates select="*"/>
