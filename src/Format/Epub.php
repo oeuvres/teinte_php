@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Oeuvres\Teinte\Format;
 
 use DOMDocument, DOMElement, DOMNode, DOMNodeList, DOMXpath;
+use Exception;
 use Oeuvres\Kit\{Check, I18n, Log, Xsl};
 
 
@@ -32,14 +33,14 @@ class Epub extends Zip
     private ?DOMDocument $opf_dom;
     /** xpath version of the opf */
     private ?DOMXpath $opf_xpath;
-    /**  html to concat */
-    private string $html;
     /** manifest of resources, map id => path */
     private $manifest = [];
     /** spine in order */
     private $spine = [];
     /** A css model with semantic properties */
     private CssModel $style;
+    /** A private dom of the html */
+    private ?DOMDocument $dom;
     /** Config for tidy html, used for inserted fragments: http://tidy.sourceforge.net/docs/quickref.html */
     public static $tidyconf = array(
         // will strip all unknown tags like <svg> or <section>
@@ -75,7 +76,7 @@ class Epub extends Zip
     public function load(string $file): bool
     {
         $this->style = new CssModel();
-        $this->html = '';
+        unset($this->dom);
         $this->chops = 0;
         if (!parent::load($file)) {
             return false;
@@ -116,14 +117,39 @@ class Epub extends Zip
     }
 
     /**
-     * Build an HTML File
+     * 
      */
-    public function html(): ?string
+    public function html(): string
     {
+        $this->dom();
+        $this->dom->formatOutput = true;
+        return $this->dom->saveXML();
+    }
+
+    /**
+     * Build a dom from epub sections
+     */
+    private function dom(): void
+    {
+        if (isset($this->dom) && $this->dom != null) return;
         if (!isset($this->opf_dom)) {
             Log::error(I18n::_('Epub.load'));
-            return null;
+            throw new Exception(I18n::_('Epub.load'));
         }
+        $html = "<article xmlns=\"http://www.w3.org/1999/xhtml\">
+  <template id=\"css\">
+" . $this->style->asXml() . "
+  </template>
+" . $this->sections() . "
+</article>
+";
+        $dom = Xsl::loadXml($html);
+        $this->dom = Xsl::transformToDoc(
+            self::$xsl_dir . 'html_tei/epub_teinte_html.xsl', 
+            $dom
+        );
+
+        /*
         $this->html = '<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"
 >
@@ -151,34 +177,19 @@ class Epub extends Zip
         );
         $this->html = "<!DOCTYPE html>\n" . $html;
         return $html;
+        */
     }
     
-
     /**
-     * transform to TEI
+     * parse  toc to get pages in order and hierarchy
      */
-    public function tei(): ?string
-    {
-        if (!$this->html) {
-            $this->html();
-            // something went wrong here
-            if (!$this->html) return null;
-        }
-        $dom = Xsl::loadXml($this->html);
-        $xml = Xsl::transformToXml(
-            self::$xsl_dir . 'html_tei/html_tei.xsl', 
-            $dom
-        );
-        return $xml;
-    }
-
-    /**
-     * parse spline or toc to get pages in order
-     */
-    private function read(): bool
+    private function sections(): ?string
     {
         $ncx_xml = $this->ncx_xml();
-        if (!$ncx_xml) return false;
+        if (!$ncx_xml) {
+            // throw exception, dev err
+            throw new Exception("[Dev error] no ncx toc available");
+        }
         // $this->html .= $ncx_xml;
         $ncx_dom = Xsl::loadXml($ncx_xml);
         // get an html from the toc
@@ -200,10 +211,49 @@ class Epub extends Zip
             },
             $sections
         );
-        $this->html .= $sections; 
-        return true;
-        // 
+        return $sections;
     }
+
+    /**
+     * transform to TEI
+     */
+    public function tei(): ?string
+    {
+        // ensure html generation
+        $this->dom();
+        // produce a <teiHeader>
+        $metadata = $this->opf_dom->getElementsByTagName('metadata')->item(0);
+
+        $dom = Xsl::dom();
+        $metadata = $dom->importNode($metadata, true);
+        $dom->appendChild($metadata);
+
+        $teiHeader = Xsl::transformToDoc(
+            self::$xsl_dir . 'html_tei/epub_dc_tei.xsl', 
+            $dom
+        );
+        // toDom for indent-
+        $dom = Xsl::transformToDoc(
+            self::$xsl_dir . 'html_tei/html_tei.xsl', 
+            $this->dom
+        );
+        $teiHeader = $dom->importNode($teiHeader->documentElement, true);
+        $first = self::elder($dom->documentElement);
+        $dom->documentElement->insertBefore($teiHeader, $first);
+        $dom->formatOutput = true;
+        return $dom->saveXML();
+    }
+
+    public static function elder(DOMNode $node): ?DOMElement
+    {
+        if(XML_ELEMENT_NODE != $node->nodeType ) return null;
+        if (!$node->hasChildNodes()) return null;
+        for ($i = 0, $count = $node->childNodes->count(); $i < $count; $i++) {
+            $el = $node->childNodes->item($i);
+            if(XML_ELEMENT_NODE == $el->nodeType) return $el; 
+        }
+    }
+
 
     /**
      * Populate the spine table, requires load() and manifest()
