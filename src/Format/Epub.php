@@ -136,7 +136,10 @@ class Epub extends Zip
             Log::error(I18n::_('Epub.load'));
             throw new Exception(I18n::_('Epub.load'));
         }
-        $html = "<article xmlns=\"http://www.w3.org/1999/xhtml\">
+        $html = "<article 
+  xmlns=\"http://www.w3.org/1999/xhtml\"
+  xmlns:epub=\"http://www.idpf.org/2007/ops\"
+>
   <template id=\"css\">
 " . $this->style->asXml() . "
   </template>
