@@ -15,7 +15,7 @@
   xmlns:php="http://php.net/xsl"
   extension-element-prefixes="date exslt php"
   >
-  <xsl:include href="epub_dc_tei.xsl"/>
+
   <xsl:output indent="yes" encoding="UTF-8" method="xml" omit-xml-declaration="yes"/>
   <xsl:variable name="lf" select="'&#10;'"/>
   <!-- 1234567890 -->
@@ -44,35 +44,31 @@
 STRUCTURE
 -->
   <xsl:template match="html:html">
-    <xsl:processing-instruction name="xml-model"> href="http://oeuvres.github.io/teinte/teinte.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"</xsl:processing-instruction>
-    <xsl:text>&#10;</xsl:text>
-    <xsl:processing-instruction name="xml-stylesheet"> type="text/xsl" href="https://oeuvres.github.io/teinte_xsl/tei_html.xsl"</xsl:processing-instruction>
-    <xsl:if test="function-available('date:date-time')">
-      <xsl:value-of select="$lf"/>
-      <xsl:comment>
-        <xsl:text>html_tei: </xsl:text>
-        <xsl:value-of select="date:date-time()"/>
-      </xsl:comment>
-    </xsl:if>
-    
+    <xsl:call-template name="procs"/>
     <TEI>
       <xsl:apply-templates select="node() | @*"/>
     </TEI>
   </xsl:template>
+  
+  <xsl:template name="procs">
+    <xsl:processing-instruction name="xml-model"> href="http://oeuvres.github.io/teinte/teinte.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"</xsl:processing-instruction>
+    <xsl:processing-instruction name="xml-stylesheet"> type="text/xsl" href="https://oeuvres.github.io/teinte_xsl/tei_html.xsl"</xsl:processing-instruction>
+  </xsl:template>
+  
+  <xsl:template match="/html:article | /html:section | html:div">
+    <xsl:call-template name="procs"/>
+    <TEI>
+      <text>
+        <body>
+          <xsl:apply-templates select="node() | @*"/>
+        </body>
+      </text>
+    </TEI>
+  </xsl:template>
   <xsl:template match="html:head">
-      <xsl:choose>
-        <!-- an epub export -->
-        <xsl:when test=".//*[dc:*|dcterms:*]">
-          <xsl:for-each select="(.//*[dc:*|dcterms:*])[1]">
-            <xsl:call-template name="opf:teiHeader"/>
-          </xsl:for-each>
-        </xsl:when>
-        <xsl:otherwise>
-          <teiHeader>
-            <xsl:apply-templates/>
-          </teiHeader>
-        </xsl:otherwise>
-      </xsl:choose>
+    <teiHeader>
+      <xsl:apply-templates/>
+    </teiHeader>
   </xsl:template>
   <xsl:template match="html:body">
     <text>
@@ -86,8 +82,8 @@ STRUCTURE
   <xsl:template name="mixed">
     <xsl:variable name="text">
       <xsl:for-each select="text()">
-        <!-- teste, normalize is faster here -->
-        <xsl:value-of select="normalize-space(.)"/>
+        <!-- tested, normalize is faster here -->
+        <xsl:value-of select="translate(normalize-space(.), ' ', '')"/>
       </xsl:for-each>
     </xsl:variable>
     <xsl:value-of select="$text"/>
@@ -166,6 +162,10 @@ STRUCTURE
       <xsl:call-template name="mixed"/>
     </xsl:variable>
     <xsl:choose>
+      <!-- spacer -->
+      <xsl:when test="$mixed = '' and not(*)">
+        <space quantity="1" unit="line"/>
+      </xsl:when>
       <!-- image container -->
       <xsl:when test="$mixed = '' and count(*) = 1 and html:img">
         <figure>
@@ -286,6 +286,10 @@ BLOCKS
       <xsl:call-template name="mixed"/>
     </xsl:variable>
     <xsl:choose>
+      <!-- spacer -->
+      <xsl:when test="$mixed = '' and not(*)">
+        <space quantity="1" unit="line"/>
+      </xsl:when>
       <!-- ??
       <xsl:when test="$mixed = '' and normalize-space(.) = '' and not(*[local-name != 'img'])">
         <xsl:apply-templates/>

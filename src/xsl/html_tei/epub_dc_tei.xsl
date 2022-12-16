@@ -28,7 +28,8 @@ XSLT 1.0, compatible browser, PHP, Python, Java…
   >
   <xsl:output encoding="UTF-8" indent="yes" method="xml"/>
   
-  <xsl:template name="opf:teiHeader">
+  
+  <xsl:template name="opf:teiHeader" match="/*">
     <teiHeader>
       <fileDesc>
         <titleStmt>
@@ -45,7 +46,10 @@ XSLT 1.0, compatible browser, PHP, Python, Java…
           </p>
         </publicationStmt>
         <sourceDesc>
-          <xsl:apply-templates select="dc:date"/>
+          <bibl>
+            <xsl:apply-templates select="dc:date"/>
+            <xsl:apply-templates select="dc:publisher"/>
+          </bibl>
         </sourceDesc>
       </fileDesc>
       <profileDesc>
@@ -59,7 +63,13 @@ XSLT 1.0, compatible browser, PHP, Python, Java…
       <xsl:value-of select="substring(., 1, 4)"/>
     </date>
   </xsl:template>
-  
+
+  <xsl:template match="dc:publisher">
+    <publisher>
+      <xsl:apply-templates/>
+    </publisher>
+  </xsl:template>
+
   <xsl:template match="dc:language">
     <langUsage>
       <language ident="{.}"/>
