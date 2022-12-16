@@ -12,7 +12,8 @@
     "require": {
         "php": ">=7.2",
         "erusev/parsedown-extra": "dev-master",
-        "oeuvres/kit": "dev-main"
+        "oeuvres/kit": "dev-main",
+        "ext-tidy": "*"
     },
     "autoload": {
         "psr-4": {
