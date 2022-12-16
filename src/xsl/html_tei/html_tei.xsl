@@ -618,11 +618,19 @@ PHRASES
   
   <xsl:template match="@class">
     <xsl:param name="class" select="normalize-space(translate(., $ÂBC, $abc))"/>
-    <xsl:if test="$class != ''">
-      <xsl:attribute name="rend">
-        <xsl:value-of select="$class"/>
-      </xsl:attribute>
-    </xsl:if>
+    <xsl:choose>
+      <!-- probably non semantic auto style like “t15”, keep ? -->
+      <!--
+      <xsl:when test="translate(substring($class, 2), '0123456789', '') = ''">
+        
+      </xsl:when>
+      -->
+      <xsl:when test="$class != ''">
+        <xsl:attribute name="rend">
+          <xsl:value-of select="$class"/>
+        </xsl:attribute>
+      </xsl:when>
+    </xsl:choose>
   </xsl:template>
 
   <xsl:template name="rend">

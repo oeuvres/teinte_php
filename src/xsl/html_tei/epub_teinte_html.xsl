@@ -34,7 +34,7 @@ Clean html extracted from epub of some oddities
     <xsl:choose>
       <xsl:when test="contains($props, ' italic ')">
         <i>
-          <xsl:apply-templates select="node()|@*"/>
+          <xsl:apply-templates select="node()|@*[name() != 'class']"/>
         </i>
       </xsl:when>
       <xsl:otherwise>
@@ -103,10 +103,16 @@ Clean html extracted from epub of some oddities
     <xsl:element name="{$element}">
       <xsl:apply-templates select="@*[local-name() != 'class']"/>
       <xsl:choose>
+        <!-- automatic style, keep ? -->
+        <!--
+        <xsl:when test="translate(substring($class, 2), '0123456789', '') = ''">
+          
+        </xsl:when>
+        -->
         <xsl:when test="normalize-space($class) != ''">
-        <xsl:attribute name="class">
-          <xsl:value-of select="normalize-space($class)"/>
-        </xsl:attribute>
+          <xsl:attribute name="class">
+            <xsl:value-of select="normalize-space($class)"/>
+          </xsl:attribute>
         </xsl:when>
       </xsl:choose>
       <xsl:apply-templates/>
