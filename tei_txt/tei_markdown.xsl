@@ -477,9 +477,25 @@ TODO: listes, tables, liens
   
   <!-- Intertitre -->
   <xsl:template match="tei:label" mode="md">
-    <xsl:text>&lt; </xsl:text>
+    <xsl:choose>
+      <xsl:when test="parent::tei:div">
+        <xsl:value-of select="$lf"/>
+        <xsl:value-of select="$lf"/>
+        <xsl:text>**</xsl:text>
+        <xsl:value-of select="normalize-space(.)"/>
+        <xsl:text>**</xsl:text>
+        <xsl:value-of select="$lf"/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:text>**</xsl:text>
+        <xsl:value-of select="normalize-space(.)"/>
+        <xsl:text>**</xsl:text>
+      </xsl:otherwise>
+    </xsl:choose>
+
+    <xsl:text>**</xsl:text>
     <xsl:value-of select="normalize-space(.)"/>
-    <xsl:text> &gt;</xsl:text>
+    <xsl:text>**</xsl:text>
   </xsl:template> 
 
   <!-- Rétablissement de césure -->

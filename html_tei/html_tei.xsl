@@ -25,6 +25,7 @@
   <!-- A key maybe used on styles for perfs -->
   <xsl:variable name="sheet" select="document('styles.xml', document(''))"/>
   <xsl:key name="class" match="teinte:class" use="@name"/>
+  <xsl:key name="id" match="*[@id]" use="@id"/>
   <xsl:template match="html:*">
     <xsl:element name="{local-name()}">
       <xsl:apply-templates select="node() | @*"/>
@@ -352,7 +353,14 @@ PHRASES
   </xsl:template>
   <!-- -->
   <xsl:template match="html:sup">
+    <xsl:variable name="mixed">
+      <xsl:call-template name="mixed"/>
+    </xsl:variable>
     <xsl:choose>
+      <!-- probably a foot note ref -->
+      <xsl:when test="$mixed = '' and count(*)=1 and html:a">
+        <xsl:apply-templates select="*"/>
+      </xsl:when>
       <xsl:when test="@class='reference'">
         <xsl:apply-templates/>
       </xsl:when>
@@ -492,30 +500,44 @@ PHRASES
   </xsl:template>
   <!-- Links -->
   <xsl:template match="html:a">
+    <xsl:variable name="id">
+      <xsl:if test="substring(@href, 1, 1) = '#'">
+        <xsl:value-of select="substring-after(@href, '#')"/>
+      </xsl:if>
+    </xsl:variable>
     <xsl:choose>
       <!-- Useful anchor ? -->
       <xsl:when test=". = ''"/>
+      <!-- back note -->
+      <xsl:when test="@class = 'footnote-backref'"/>
       <!-- 
-<a href="#footnote11" title="Go to footnote 11"><span class="smaller">[11]</span></a>
+<sup id="fnref1:1"><a href="#fn:1" class="footnote-ref">1</a></sup>
       -->
+      <xsl:when test="$id != '' and (@class = 'fn' or @class='footnote-ref')">
+        <xsl:variable name="note">
+          <xsl:apply-templates select="key('id', $id)/node()"/>
+        </xsl:variable>
+        <xsl:choose>
+          <xsl:when test="count(key('id', $id)) &gt; 0">
+            <note>
+              <xsl:apply-templates select="key('id', $id)/node()"/>
+            </note>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:call-template name="ref"/>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:when>
       <xsl:otherwise>
-        <ref>
-          <xsl:apply-templates select="@*"/>
-          <xsl:attribute name="target">
-            <xsl:choose>
-              <xsl:when test="starts-with(@href, '#cite_note-')">
-                <xsl:text>#fn</xsl:text>
-                <xsl:value-of select="substring-after(@href, '#cite_note-')"/>
-              </xsl:when>
-              <xsl:otherwise>
-                <xsl:value-of select="@href"/>
-              </xsl:otherwise>
-            </xsl:choose>
-          </xsl:attribute>
-          <xsl:apply-templates/>
-        </ref>
+        <xsl:call-template name="ref"/>
       </xsl:otherwise>
     </xsl:choose>
+  </xsl:template>
+  <xsl:template name="ref">
+    <ref>
+      <xsl:apply-templates select="@*"/>
+      <xsl:apply-templates/>
+    </ref>
   </xsl:template>
   <xsl:template match="html:table">
     <table>
