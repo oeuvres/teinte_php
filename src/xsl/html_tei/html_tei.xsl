@@ -523,8 +523,10 @@ PHRASES
       </xsl:if>
     </xsl:variable>
     <xsl:choose>
-      <!-- Useful anchor ? -->
-      <xsl:when test=". = ''"/>
+      <!-- keep anchors, maybe a page number -->
+      <xsl:when test=". = '' and @id">
+        <anchor xml:id="{@id}"/>
+      </xsl:when>
       <!-- back note -->
       <xsl:when test="@class = 'footnote-backref'"/>
       <!-- 

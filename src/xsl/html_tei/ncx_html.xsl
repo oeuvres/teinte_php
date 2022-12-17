@@ -33,13 +33,24 @@
     </body>
   </xsl:template>
   <xsl:template match="ncx:navPoint">
-    <section>
+    <xsl:variable name="src" select="ncx:content/@src"/>
+    <!-- Child may repeat entry -->
+    <xsl:variable name="child1-src" select="ncx:navPoint[1]/ncx:content/@src"/>
+    <section data-src="{$src}">
       <xsl:if test="ncx:navLabel">
         <xsl:attribute name="title">
           <xsl:value-of select="normalize-space(ncx:navLabel)"/>
         </xsl:attribute>
       </xsl:if>
-      <xsl:apply-templates select="ncx:content"/>
+
+      <xsl:choose>
+        <!-- same target for first child, do not process 2 times ncx:content -->
+        <xsl:when test="$src = $child1-src"/>
+        <!-- default -->
+        <xsl:otherwise>
+          <xsl:apply-templates select="ncx:content"/>
+        </xsl:otherwise>
+      </xsl:choose>
       <xsl:apply-templates select="ncx:navPoint"/>
     </section>
   </xsl:template>
@@ -58,13 +69,15 @@
         </xsl:attribute>
       </xsl:if>
     </content>
-    <!-- check spine -->
-    <xsl:variable name="id" select="key('href', $file)/@id"/>
-    <xsl:for-each select="key('spine', $id)">
-      <xsl:apply-templates select="following-sibling::opf:itemref[1]" mode="next">
-        <xsl:with-param name="next-file" select="$next-file"/>
-      </xsl:apply-templates>
-    </xsl:for-each>
+    <!-- check spine if next file is nanother -->
+    <xsl:if test="$file != $next-file">
+      <xsl:variable name="id" select="key('href', $file)/@id"/>
+      <xsl:for-each select="key('spine', $id)">
+        <xsl:apply-templates select="following-sibling::opf:itemref[1]" mode="next">
+          <xsl:with-param name="next-file" select="$next-file"/>
+        </xsl:apply-templates>
+      </xsl:for-each>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template match="opf:itemref" mode="next">
@@ -75,7 +88,7 @@
       <xsl:when test="$file = $next-file"/>
       <xsl:otherwise>
         <!-- probably a section -->
-        <section>
+        <section data-src="{$href}">
           <content>
             <xsl:attribute name="src">
               <xsl:value-of select="$href"/>
