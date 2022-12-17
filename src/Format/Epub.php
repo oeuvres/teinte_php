@@ -13,9 +13,9 @@ namespace Oeuvres\Teinte\Format;
 
 use DOMDocument, DOMElement, DOMNode, DOMNodeList, DOMXpath;
 use Exception;
-use Oeuvres\Kit\{Check, I18n, Log, Xsl};
+use Oeuvres\Kit\{Check, I18n, Log, Parse, Xsl};
 
-
+Check::extension('tidy');
 /**
  * Extract texts from epub files
  */
@@ -35,12 +35,13 @@ class Epub extends Zip
     private ?DOMXpath $opf_xpath;
     /** manifest of resources, map id => path */
     private $manifest = [];
-    /** spine in order */
-    private $spine = [];
     /** A css model with semantic properties */
     private CssModel $style;
     /** A private dom of the html */
     private ?DOMDocument $dom;
+    /** Regexp program to clean some html oddidie */
+    private array $preg;
+
     /** Config for tidy html, used for inserted fragments: http://tidy.sourceforge.net/docs/quickref.html */
     public static $tidyconf = array(
         // will strip all unknown tags like <svg> or <section>
@@ -68,6 +69,10 @@ class Epub extends Zip
         $this->html = '';
         // useful for dev
         // self::$xsl_dir = dirname(__DIR__, 3) . '/teinte_xsl/';
+        // load a regex program
+        $pcre_tsv = self::$xsl_dir . 'html_tei/html_pcre.tsv';
+        $this->preg = Parse::pcre_tsv($pcre_tsv);
+
     }
 
     /**
@@ -106,9 +111,14 @@ class Epub extends Zip
                 $ok = false;
             }
         }
+        // decode all uris in opf
         if (!$ok) return false;
         $this->opf_xpath = new DOMXpath($this->opf_dom);
         $this->opf_xpath->registerNamespace("opf", "http://www.idpf.org/2007/opf");
+        $nl = $this->opf_xpath->query("//@href");
+        foreach ($nl as $node) {
+            $node->value = urldecode($node->value);
+        }
         // read resources
         $this->manifest();
         $this->spine();
@@ -136,6 +146,8 @@ class Epub extends Zip
             Log::error(I18n::_('Epub.load'));
             throw new Exception(I18n::_('Epub.load'));
         }
+        $sections = $this->sections();
+        $sections = preg_replace($this->preg[0], $this->preg[1], $sections);
         $html = "<article 
   xmlns=\"http://www.w3.org/1999/xhtml\"
   xmlns:epub=\"http://www.idpf.org/2007/ops\"
@@ -143,9 +155,10 @@ class Epub extends Zip
   <template id=\"css\">
 " . $this->style->asXml() . "
   </template>
-" . $this->sections() . "
+" . $sections . "
 </article>
 ";
+        // print $html;
         $dom = Xsl::loadXml($html);
         $this->dom = Xsl::transformToDoc(
             self::$xsl_dir . 'html_tei/epub_teinte_html.xsl', 
@@ -160,8 +173,17 @@ class Epub extends Zip
     {
         // concat toc + spine
         $xml = "<pack>\n";
-        $xml .= preg_replace("/<\?xml[^>]*>/", '', $this->ncx_xml());
-        $xml .= preg_replace("/<\?xml[^>]*>/", '', $this->opf_xml);
+        $toc = $this->ncx_xml();
+        $toc = preg_replace_callback(
+            '/ src="([^"]*)"/',
+            function ($matches) { 
+                return ' src="' . urldecode($matches[1]) . '"';
+            },
+            $toc
+        );
+        // strip prolog
+        $xml .= preg_replace("/^.*?(<\p{L}+)/su", '$1', $toc);
+        $xml .= preg_replace("/^.*?(<\p{L}+)/su", '$1', $this->opf_xml);
         $xml .= "</pack>\n";
         $dom = Xsl::loadXml($xml);
         // get an html from the toc with includes
@@ -341,16 +363,18 @@ class Epub extends Zip
         $from_file = $this->ncx_dir . urldecode($from_file);
         $contents = $this->get($from_file);
         if (!$contents) {
-            $html .= "<!-- $from_file not found -->\n";
+            $msg = I18n::_("Epub.chop.404", $this->file, $from_file);
+            Log::warning($msg);
+            $html .= "<!-- $msg -->\n";
             return $html;
         }
-        // indent some blocks
+        // indent some blocks pbefor chopping
         $contents = preg_replace(
             array('@(</(div|h1|h2|h3|h4|h5|h6|p)>)([^\n])@', '@(<body)@'),
             array("$1\n$3", "\n$1"),
             $contents
         );
-        // gat the start index from wich insert
+        // get the start index from wich insert
         $pos_start = 0;
         if (!preg_match('@<body[^>]*>@', $contents, $matches, PREG_OFFSET_CAPTURE)) {
             $msg = I18n::_("Epub.chop.body", $this->file, $from_file);

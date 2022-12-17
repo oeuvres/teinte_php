@@ -1,11 +1,8 @@
 # [Teinte_php](https://github.com/oeuvres/teinte_php), TEI shades, PHP pilot
 
-Teinte is an [open source](https://github.com/oeuvres/teinte) library suite to convert and publish texts, around a subset of [TEI](https://tei-c.org/release/docs/tei-p5-docs/en/html/REF-ELEMENTS.html). It is available as a composer package [oeuvres/teinte](https://packagist.org/packages/oeuvres/teinte).
-
-The heart is an embeded XSLT-1.0 pack of transformations [teinte_xsl](https://github.com/oeuvres/teinte_xsl). TEI is an academic XML schema dedicated to all forms of texts, not only blog posts but also: novels, theatre, letters… *Teinte suite* has been developed during more than 15 years, mainly by <a onmouseover="this.href='mailto'+'\x3A'+'frederic.glorieux'+'\x40'+'fictif.org'" href="#">Frédéric Glorieux</a> under different academic affiliations.
+Teinte_php is an [open source](https://github.com/oeuvres/teinte_php) library to convert and publish texts with PHP. It is available as a composer package [oeuvres/teinte](https://packagist.org/packages/oeuvres/teinte). The heart is an embeded XSLT-1.0 pack of transformations [teinte_xsl](https://github.com/oeuvres/teinte_xsl). The pivot format is a subset of [TEI](https://tei-c.org/release/docs/tei-p5-docs/en/html/REF-ELEMENTS.html), an academic XML schema dedicated to all forms of texts, not only blog posts but also: novels, theatre, letters… *Teinte suite* has been developed during more than 15 years, mainly by <a onmouseover="this.href='mailto'+'\x3A'+'frederic.glorieux'+'\x40'+'fictif.org'" href="#">Frédéric Glorieux</a> under different academic affiliations.
 
 ![Teinte xsl](docs/teinte_xsl.png)
-
 
 
 ## Some project using *Teinte*
