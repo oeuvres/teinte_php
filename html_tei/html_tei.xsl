@@ -525,7 +525,11 @@ PHRASES
     <xsl:choose>
       <!-- keep anchors, maybe a page number -->
       <xsl:when test=". = '' and @id">
-        <anchor xml:id="{@id}"/>
+        <anchor>
+          <xsl:attribute name="xml:id">
+            <xsl:value-of select="@id"/>
+          </xsl:attribute>
+        </anchor>
       </xsl:when>
       <!-- back note -->
       <xsl:when test="@class = 'footnote-backref'"/>

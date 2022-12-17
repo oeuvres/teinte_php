@@ -31,15 +31,22 @@ Clean html extracted from epub of some oddities
       <xsl:call-template name="mixed"/>
     </xsl:variable>
     <xsl:choose>
-      <!-- what ? text content ? -->
-      <xsl:when test="$mixed != ''">
-        <xsl:call-template name="p"/>
-      </xsl:when>
+      <!-- explicit epub section, give it instead of this one -->
       <xsl:when test="$count = 1 and html:section[@epub:type]">
         <!-- report title attribute (in case) -->
         <xsl:apply-templates>
           <xsl:with-param name="title" select="$title"/>
         </xsl:apply-templates>
+      </xsl:when>
+      <!-- generated section, keep it -->
+      <xsl:when test="@data-src">
+        <xsl:copy>
+          <xsl:apply-templates select="@*|node()"/>
+        </xsl:copy>
+      </xsl:when>
+      <!-- what ? text content ? -->
+      <xsl:when test="$mixed != ''">
+        <xsl:call-template name="p"/>
       </xsl:when>
       <xsl:when test="$count = 1 and html:section">
         <xsl:copy>
@@ -251,10 +258,24 @@ Clean html extracted from epub of some oddities
       </xsl:call-template>
     </xsl:variable>
     <xsl:variable name="count" select="count(*)"/>
-    <xsl:variable name="bros" select="count(../*)"/>
+    <xsl:variable name="bros" select="count(
+        ../html:blockquote
+      | ../html:div[text()[normalize-space(.) != '']] 
+      | ../html:ol
+      | ../html:p
+      | ../html:ul
+    )"/>
+    <xsl:variable name="children" select="count(
+        html:div[text()[normalize-space(.) != '']] 
+      | html:p
+    )"/>
     <xsl:choose>
+      <!-- mixed content, it’s a para -->
+      <xsl:when test="$mixed != ''">
+        <xsl:call-template name="p"/>
+      </xsl:when>
       <!-- with a title, let’s bet it is a section -->
-      <xsl:when test="html:h1 | html:h2 | html:h3  | html:h4  | html:h5  | html:h6 | html:header">
+      <xsl:when test="$children &gt; 1 and (html:h1 | html:h2 | html:h3  | html:h4  | html:h5  | html:h6 | html:header)">
         <section>
           <xsl:apply-templates select="@*[name() != 'class']"/>
           <xsl:call-template name="class">
@@ -263,36 +284,25 @@ Clean html extracted from epub of some oddities
           <xsl:apply-templates/>
         </section>
       </xsl:when>
-      <xsl:when test="$mixed != ''">
-        <xsl:call-template name="p"/>
-      </xsl:when>
-      <!-- no mixed content, no brothers,  go through -->
-      <xsl:when test="$bros = 1">
+      <!-- no content brothers, seems presentation, go through -->
+      <xsl:when test="$bros = 0">
         <xsl:apply-templates/>
       </xsl:when>
-      <!-- no mixed content, try to guess a content grouping -->
-      <xsl:when test="html:blockquote | html:div[text()[normalize-space(.) != '']] | html:p">
-        <xsl:choose>
-          <!-- has browsers text container, may be a semantic text grouper -->
-          <xsl:when test="../html:blockquote | ../html:div[text()[normalize-space(.) != '']] | ../html:p">
-            <quote>
-              <xsl:apply-templates select="@*[name() != 'class']"/>
-              <xsl:call-template name="class">
-                <xsl:with-param name="suffix" select="$props"/>
-              </xsl:call-template>
-              <xsl:apply-templates/>
-            </quote>
-          </xsl:when>
-          <!-- seems presentation only -->
-          <xsl:otherwise>
-            <xsl:apply-templates/>
-          </xsl:otherwise>
-        </xsl:choose>
+      <!-- content grouping ? like stanza or quote ? keep it -->
+      <xsl:when test="$children &gt; 1">
+        <blockquote>
+          <xsl:apply-templates select="@*[name() != 'class']"/>
+          <xsl:call-template name="class">
+            <xsl:with-param name="suffix" select="$props"/>
+          </xsl:call-template>
+          <xsl:apply-templates/>
+        </blockquote>
       </xsl:when>
-      <!-- no div with content, go through -->
+      <!-- structural div -->
       <xsl:when test="html:div">
         <xsl:apply-templates/>
       </xsl:when>
+      <!-- default, maybe a figure container, or a para with one <span> -->
       <xsl:otherwise>
         <xsl:call-template name="p"/>
       </xsl:otherwise>
