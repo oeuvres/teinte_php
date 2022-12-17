@@ -24,20 +24,73 @@ Clean html extracted from epub of some oddities
     </xsl:copy>
   </xsl:template>
   
-  <xsl:template match="html:section[html:section]">
+  <xsl:template match="html:section">
+    <xsl:param name="title" select="@title"/>
+    <xsl:variable name="count" select="count(*)"/>
+    <xsl:variable name="mixed">
+      <xsl:call-template name="mixed"/>
+    </xsl:variable>
     <xsl:choose>
-      <xsl:when test="count(*) = 1 and html:section[@epub:type]">
-        <xsl:apply-templates/>
+      <!-- what ? text content ? -->
+      <xsl:when test="$mixed != ''">
+        <xsl:call-template name="p"/>
       </xsl:when>
-      <xsl:when test="count(*) = 1 and html:section">
+      <xsl:when test="$count = 1 and html:section[@epub:type]">
+        <!-- report title attribute (in case) -->
+        <xsl:apply-templates>
+          <xsl:with-param name="title" select="$title"/>
+        </xsl:apply-templates>
+      </xsl:when>
+      <xsl:when test="$count = 1 and html:section">
         <xsl:copy>
           <xsl:copy-of select="@*"/>
-          <xsl:apply-templates select="html:section/node()"/>
+          <xsl:if test="$title != ''">
+            <xsl:attribute name="title">
+              <xsl:value-of select="$title"/>
+            </xsl:attribute>
+          </xsl:if>
+          <xsl:apply-templates select="*/node()"/>
         </xsl:copy>
       </xsl:when>
+      <xsl:when test="$count = 1 and html:div">
+        <xsl:copy>
+          <xsl:copy-of select="@*"/>
+          <xsl:if test="$title != ''">
+            <xsl:attribute name="title">
+              <xsl:value-of select="$title"/>
+            </xsl:attribute>
+          </xsl:if>
+          <xsl:variable name="div_mixed">
+            <xsl:apply-templates select="*" mode="mixed"/>
+          </xsl:variable>
+          <xsl:choose>
+            <!-- May be bad for a simple stanza or quote -->
+            <xsl:when test="$div_mixed = ''">
+              <xsl:apply-templates select="*/node()"/>
+            </xsl:when>
+            <xsl:otherwise>
+              <xsl:apply-templates/>
+            </xsl:otherwise>
+          </xsl:choose>
+        </xsl:copy>
+      </xsl:when>
+      <!-- 
+        <section>
+          <div>
+            <p/>
+            <p/>
+          </div>
+          <section/>
+          <section/>
+      -->
       <xsl:otherwise>
         <xsl:copy>
           <xsl:copy-of select="@*"/>
+          <xsl:if test="$title != ''">
+            <xsl:attribute name="title">
+              <xsl:value-of select="$title"/>
+            </xsl:attribute>
+          </xsl:if>
           <xsl:apply-templates/>
         </xsl:copy>
       </xsl:otherwise>
@@ -65,7 +118,7 @@ Clean html extracted from epub of some oddities
     </xsl:choose>
   </xsl:template>
 
-  <xsl:template name="mixed">
+  <xsl:template name="mixed" match="*" mode="mixed">
     <xsl:variable name="text">
       <xsl:for-each select="text()">
         <xsl:value-of select="."/>
@@ -198,10 +251,10 @@ Clean html extracted from epub of some oddities
       </xsl:call-template>
     </xsl:variable>
     <xsl:variable name="count" select="count(*)"/>
-
+    <xsl:variable name="bros" select="count(../*)"/>
     <xsl:choose>
-      <!-- with a title, let’s bet it is a section, maybe we should check it’s not unique -->
-      <xsl:when test="html:h1 | html:h2 | html:h3">
+      <!-- with a title, let’s bet it is a section -->
+      <xsl:when test="html:h1 | html:h2 | html:h3  | html:h4  | html:h5  | html:h6 | html:header">
         <section>
           <xsl:apply-templates select="@*[name() != 'class']"/>
           <xsl:call-template name="class">
@@ -213,9 +266,32 @@ Clean html extracted from epub of some oddities
       <xsl:when test="$mixed != ''">
         <xsl:call-template name="p"/>
       </xsl:when>
-      <!-- artificial hierachy ? -->
-      <xsl:when test="$count = 1 and (html:article | html:div | html:section)">
-        <xsl:apply-templates select="*/node()"/>
+      <!-- no mixed content, no brothers,  go through -->
+      <xsl:when test="$bros = 1">
+        <xsl:apply-templates/>
+      </xsl:when>
+      <!-- no mixed content, try to guess a content grouping -->
+      <xsl:when test="html:blockquote | html:div[text()[normalize-space(.) != '']] | html:p">
+        <xsl:choose>
+          <!-- has browsers text container, may be a semantic text grouper -->
+          <xsl:when test="../html:blockquote | ../html:div[text()[normalize-space(.) != '']] | ../html:p">
+            <quote>
+              <xsl:apply-templates select="@*[name() != 'class']"/>
+              <xsl:call-template name="class">
+                <xsl:with-param name="suffix" select="$props"/>
+              </xsl:call-template>
+              <xsl:apply-templates/>
+            </quote>
+          </xsl:when>
+          <!-- seems presentation only -->
+          <xsl:otherwise>
+            <xsl:apply-templates/>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:when>
+      <!-- no div with content, go through -->
+      <xsl:when test="html:div">
+        <xsl:apply-templates/>
       </xsl:when>
       <xsl:otherwise>
         <xsl:call-template name="p"/>
