@@ -977,10 +977,7 @@ Could be correct for a text only version in <xsl:value-of select=""/>
         </xsl:variable>
         <xsl:variable name="title">
           <xsl:choose>
-            <xsl:when test="@n != '' and not(tei:head)">
-              <xsl:value-of select="normalize-space(@n)"/>
-            </xsl:when>
-            <xsl:otherwise>
+            <xsl:when test="tei:head">
               <!-- allow @type='kicker' for toc -->
               <xsl:for-each select="tei:head[not(@type='sub')][not(@type='subtitle')]">
                 <xsl:apply-templates mode="title" select="."/>
@@ -996,7 +993,10 @@ Could be correct for a text only version in <xsl:value-of select=""/>
                   </xsl:choose>
                 </xsl:if>
               </xsl:for-each>
-            </xsl:otherwise>
+            </xsl:when>
+            <xsl:when test="@n != ''">
+              <xsl:value-of select="normalize-space(@n)"/>
+            </xsl:when>
           </xsl:choose>
         </xsl:variable>
         <xsl:copy-of select="$title"/>
@@ -1078,6 +1078,7 @@ Could be correct for a text only version in <xsl:value-of select=""/>
             </i>
           </xsl:when>
           -->
+          
           <xsl:when test="$title">
             <xsl:copy-of select="$title"/>
           </xsl:when>
@@ -1111,11 +1112,27 @@ Could be correct for a text only version in <xsl:value-of select=""/>
       <xsl:when test="@n">
         <xsl:value-of select="@n"/>
       </xsl:when>
-      <xsl:when test="@type">
-        <xsl:call-template name="message">
-          <xsl:with-param name="id" select="@type"/>
-        </xsl:call-template>
+      <!-- -->
+      <!-- bad TEI generated -->
+      <xsl:when test="false()">
+        <!-- Let’s bet on first non empty block ? be careful of epigraphs, notes or page break… -->
+        <xsl:variable name="first" select="*[self::tei:p or self::tei:dateline or self::tei:byline or self::tei:label][1]"/>
+        <xsl:variable name="norm" select="normalize-space($first)"/>
+        <xsl:variable name="max" select="50"/>
+        <xsl:choose>
+          <!-- Avoid to big title -->
+          <xsl:when test="string-length($norm) &gt; $max">
+            <xsl:value-of select="substring($norm, 1, $max)"/>
+            <xsl:variable name="depunct" select="translate(substring($norm, $max + 1), ',.: ?!', '             ')"/>
+            <xsl:value-of select="substring-before($depunct, ' ')"/>
+            <xsl:text>…</xsl:text>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:apply-templates select="$first/node()" mode="title"/>
+          </xsl:otherwise>
+        </xsl:choose>
       </xsl:when>
+      <!--
       <xsl:when test="self::tei:div and parent::tei:body">
         <xsl:text>[</xsl:text>
         <xsl:call-template name="message">
@@ -1129,6 +1146,13 @@ Could be correct for a text only version in <xsl:value-of select=""/>
         <xsl:text>[</xsl:text>
         <xsl:call-template name="n"/>
         <xsl:text>]</xsl:text>
+      </xsl:otherwise>
+      -->
+      <xsl:otherwise>
+        <!--
+        <xsl:number count="tei:div | tei:div0 | tei:div1 | tei:div2 | tei:div3 | tei:div4 | tei:div5" level="multiple" format="I.1.a."/>
+        -->
+        <xsl:number format="I."/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
