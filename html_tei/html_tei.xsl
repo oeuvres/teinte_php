@@ -21,7 +21,7 @@
   <!-- 1234567890 -->
   <xsl:variable name="ÂBC">ABCDEFGHIJKLMNOPQRSTUVWXYZÀÂÄÆÇÉÈÊËÎÏÑÔÖŒÙÛÜ _-,</xsl:variable>
   <xsl:variable name="âbc">abcdefghijklmnopqrstuvwxyzàâäæçéèêëîïñôöœùûü </xsl:variable>
-  <xsl:variable name="abc">abcdefghijklmnopqrstuvwxyzaaaeceeeeiinooeuuu </xsl:variable>
+  <xsl:variable name="abc">abcdefghijklmnopqrstuvwxyzaaaeceeeeiinooeuuu _-</xsl:variable>
   <!-- A key maybe used on styles for perfs -->
   <xsl:variable name="sheet" select="document('styles.xml', document(''))"/>
   <xsl:key name="class" match="teinte:class" use="@name"/>
@@ -163,6 +163,12 @@ STRUCTURE
       <xsl:call-template name="mixed"/>
     </xsl:variable>
     <xsl:choose>
+      <!-- epub type -->
+      <xsl:when test="@epub:type='title'">
+        <head>
+          <xsl:apply-templates select="@*|node()"/>
+        </head>
+      </xsl:when>
       <!-- spacer -->
       <xsl:when test="$mixed = '' and not(*)">
         <space quantity="1" unit="line"/>
@@ -195,7 +201,10 @@ STRUCTURE
           <xsl:apply-templates select="html:i/node()"/>
         </p>
       </xsl:when>
-
+      <!-- no sibling paras, strip ? -->
+      <xsl:when test="not(../html:p)">
+        <xsl:apply-templates/>
+      </xsl:when>
       <xsl:otherwise>
         <quote>
           <xsl:apply-templates select="@*"/>
@@ -433,6 +442,11 @@ PHRASES
     </xsl:variable>
 
     <xsl:choose>
+      <xsl:when test="@epub:type = 'pagebreak' or @role='doc-pagebreak'">
+        <pb>
+          <xsl:apply-templates select="@title|@id|node()"/>
+        </pb>
+      </xsl:when>
       <!-- specific not well handle by mapping -->
       <xsl:when test="contains(@class, 'pagenum')">
         <pb n="{@id}"/>
@@ -448,8 +462,11 @@ PHRASES
           <xsl:apply-templates/>
         </author>
       </xsl:when>
+      <!-- empty span, copy, could be interesting -->
       <xsl:when test=". = ''">
-        <xsl:apply-templates/>
+        <xsl:copy>
+          <xsl:apply-templates select="@*|node()"/>
+        </xsl:copy>
       </xsl:when>
       <xsl:when test="@lang | @xml:lang">
         <foreign>

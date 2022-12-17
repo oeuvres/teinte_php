@@ -7,11 +7,12 @@ Clean html extracted from epub of some oddities
 <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0"
   xmlns="http://www.w3.org/1999/xhtml" 
   xmlns:html="http://www.w3.org/1999/xhtml"
+  xmlns:epub="http://www.idpf.org/2007/ops"
   exclude-result-prefixes="html"
   >
   <xsl:output indent="yes" encoding="UTF-8" method="xml" omit-xml-declaration="yes"/>
   <!-- space separated css class name to strip -->
-  <xsl:param name="class_exclude"> chp italic niv1p </xsl:param>
+  <xsl:param name="class_exclude"> chp italic niv1p txt </xsl:param>
   <xsl:variable name="class_ex" select="concat(' ', $class_exclude, ' ')"/>
   <xsl:variable name="class_in"/>
   <!-- load a possible css island  -->
@@ -22,7 +23,25 @@ Clean html extracted from epub of some oddities
     </xsl:copy>
   </xsl:template>
   
-  
+  <xsl:template match="html:section[html:section]">
+    <xsl:choose>
+      <xsl:when test="count(*) = 1 and html:section[@epub:type]">
+        <xsl:apply-templates/>
+      </xsl:when>
+      <xsl:when test="count(*) = 1 and html:section">
+        <xsl:copy>
+          <xsl:copy-of select="@*"/>
+          <xsl:apply-templates select="html:section/node()"/>
+        </xsl:copy>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:copy>
+          <xsl:copy-of select="@*"/>
+          <xsl:apply-templates/>
+        </xsl:copy>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
   
   <!-- semantize some elements -->
   <xsl:template match="html:span[@class]">
@@ -54,36 +73,113 @@ Clean html extracted from epub of some oddities
     <xsl:value-of select="normalize-space(.)"/>
   </xsl:template>
 
-  <xsl:template match="html:p | html:div">
-    <xsl:variable name="norm" select="normalize-space(.)"/>
+  <xsl:template name="class">
+    <xsl:param name="suffix"/>
+    <xsl:variable name="class">
+      <xsl:variable name="text">
+        <xsl:call-template name="class_clean">
+          <xsl:with-param name="class" select="@class"/>
+        </xsl:call-template>
+        <xsl:text> </xsl:text>
+        <xsl:value-of select="$suffix"/>
+      </xsl:variable>
+      <xsl:value-of select="normalize-space($text)"/>
+    </xsl:variable>
+    <xsl:if test="$class != ''">
+      <xsl:attribute name="class">
+        <xsl:value-of select="$class"/>
+      </xsl:attribute>
+    </xsl:if>
+  </xsl:template>
+
+  <xsl:template match="html:p">
     <xsl:variable name="mixed">
       <xsl:call-template name="mixed"/>
     </xsl:variable>
+    <xsl:variable name="props">
+      <xsl:call-template name="class_props"/>
+    </xsl:variable>
     <xsl:choose>
+      <xsl:when test="false()"/>
+      <xsl:otherwise>
+        <p>
+          <xsl:apply-templates select="@*[name() != 'class']"/>
+          <xsl:call-template name="class">
+            <xsl:with-param name="suffix" select="$props"/>
+          </xsl:call-template>
+          <xsl:apply-templates/>
+        </p>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template match="html:div">
+    <xsl:variable name="mixed">
+      <xsl:call-template name="mixed"/>
+    </xsl:variable>
+    <xsl:variable name="props">
+      <xsl:call-template name="class_props">
+        <xsl:with-param name="class" select="@class"/>
+      </xsl:call-template>
+    </xsl:variable>
+
+
+    <xsl:choose>
+      <!-- with a title, let’s bet it is a section -->
+      <xsl:when test="html:h1 | html:h2 | html:h3">
+        <section>
+          <xsl:apply-templates select="@*[name() != 'class']"/>
+          <xsl:call-template name="class">
+            <xsl:with-param name="suffix" select="$props"/>
+          </xsl:call-template>
+          <xsl:apply-templates/>
+        </section>
+      </xsl:when>
+      <!-- text content, a para <p>? -->
+      <xsl:when test="$mixed != ''">
+        <p>
+          <xsl:apply-templates select="@*[name() != 'class']"/>
+          <xsl:call-template name="class">
+            <xsl:with-param name="suffix" select="$props"/>
+          </xsl:call-template>
+          <xsl:apply-templates/>
+        </p>
+      </xsl:when>
       <!-- One <i> -->
+      <!--
       <xsl:when test="$mixed = '' and count(*) = 1 and html:i">
         <xsl:call-template name="div">
           <xsl:with-param name="style">i</xsl:with-param>
         </xsl:call-template>
       </xsl:when>
-      <!-- text, no question -->
-      <xsl:when test="$norm != ''">
-        <xsl:call-template name="div"/>
-      </xsl:when>
+      -->
       <xsl:when test="html:img">
-        <xsl:call-template name="div">
-          <xsl:with-param name="element">figure</xsl:with-param>
-        </xsl:call-template>
+        <figure>
+          <xsl:apply-templates select="@*[name() != 'class']"/>
+          <xsl:call-template name="class">
+            <xsl:with-param name="suffix" select="$props"/>
+          </xsl:call-template>
+          <xsl:apply-templates/>
+        </figure>
       </xsl:when>
       <!-- usually spacing -->
       <xsl:when test="html:br">
         <p> </p>
       </xsl:when>
+      <xsl:otherwise>
+        <div>
+          <xsl:apply-templates select="@*[name() != 'class']"/>
+          <xsl:call-template name="class">
+            <xsl:with-param name="suffix" select="$props"/>
+          </xsl:call-template>
+          <xsl:apply-templates/>
+        </div>
+      </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
   
   
-  <xsl:template name="div">
+  <xsl:template name="div__">
     <xsl:param name="style"/>
     <xsl:param name="element" select="name()"/>
     <xsl:variable name="props">
@@ -189,8 +285,21 @@ Clean html extracted from epub of some oddities
         </xsl:call-template>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:copy-of select="key('css', concat('.', $norm))"/>
         <xsl:for-each select="key('css', concat('.', $norm))">
+          <xsl:for-each select="html:declaration">
+            <xsl:text> </xsl:text>
+            <xsl:value-of select="@value"/>
+            <xsl:text> </xsl:text>
+          </xsl:for-each>
+        </xsl:for-each>
+        <xsl:for-each select="key('css', concat('span.', $norm))">
+          <xsl:for-each select="html:declaration">
+            <xsl:text> </xsl:text>
+            <xsl:value-of select="@value"/>
+            <xsl:text> </xsl:text>
+          </xsl:for-each>
+        </xsl:for-each>
+        <xsl:for-each select="key('css', concat('div.', $norm))">
           <xsl:for-each select="html:declaration">
             <xsl:text> </xsl:text>
             <xsl:value-of select="@value"/>
