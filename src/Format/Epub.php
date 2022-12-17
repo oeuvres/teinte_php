@@ -158,23 +158,23 @@ class Epub extends Zip
      */
     private function sections(): ?string
     {
-        $ncx_xml = $this->ncx_xml();
-        if (!$ncx_xml) {
-            // throw exception, dev err
-            throw new Exception("[Dev error] no ncx toc available");
-        }
-        // $this->html .= $ncx_xml;
-        $ncx_dom = Xsl::loadXml($ncx_xml);
-        // get an html from the toc
-        $sections = Xsl::transformToXml(self::$xsl_dir.'html_tei/ncx_html.xsl', $ncx_dom);
+        // concat toc + spine
+        $xml = "<pack>\n";
+        $xml .= preg_replace("/<\?xml[^>]*>/", '', $this->ncx_xml());
+        $xml .= preg_replace("/<\?xml[^>]*>/", '', $this->opf_xml);
+        $xml .= "</pack>\n";
+        $dom = Xsl::loadXml($xml);
+        // get an html from the toc with includes
+        $sections = Xsl::transformToXml(self::$xsl_dir.'html_tei/ncx_html.xsl', $dom);
         $sections = preg_replace(
             ["/<body[^>]*>/", "/<\/body>/"],
             ["", ""],
             $sections
         );
+        // resolve includes
         $sections = preg_replace_callback(
             '/<content src="([^"]+)"( to="([^"]+)")?\/>/',
-            function ($matches) {
+            function ($matches) {                
                 if (isset($matches[3])) {
                     return "\n" . $this->chop($matches[1], $matches[3]) . "\n";
                 }
