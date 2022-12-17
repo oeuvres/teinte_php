@@ -74,11 +74,14 @@
     <xsl:choose>
       <xsl:when test="$file = $next-file"/>
       <xsl:otherwise>
-        <content>
-          <xsl:attribute name="src">
-            <xsl:value-of select="$href"/>
-          </xsl:attribute>
-        </content>
+        <!-- probably a section -->
+        <section>
+          <content>
+            <xsl:attribute name="src">
+              <xsl:value-of select="$href"/>
+            </xsl:attribute>
+          </content>
+        </section>
         <xsl:apply-templates select="following-sibling::opf:itemref[1]" mode="next">
           <xsl:with-param name="next-file" select="$next-file"/>
         </xsl:apply-templates>

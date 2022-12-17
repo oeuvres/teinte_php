@@ -10,7 +10,8 @@ Clean html extracted from epub of some oddities
   xmlns:epub="http://www.idpf.org/2007/ops"
   exclude-result-prefixes="html"
   >
-  <xsl:output indent="yes" encoding="UTF-8" method="xml" omit-xml-declaration="yes"/>
+  <!-- do not omit xml declaration for dom loading, do not indent for non mixed content -->
+  <xsl:output indent="no" encoding="UTF-8" method="xml"/>
   <!-- space separated css class name to strip -->
   <xsl:param name="class_exclude"> chp italic niv1p txt </xsl:param>
   <xsl:variable name="class_ex" select="concat(' ', $class_exclude, ' ')"/>
@@ -70,7 +71,7 @@ Clean html extracted from epub of some oddities
         <xsl:value-of select="."/>
       </xsl:for-each>
     </xsl:variable>
-    <xsl:value-of select="normalize-space(.)"/>
+    <xsl:value-of select="normalize-space($text)"/>
   </xsl:template>
 
   <xsl:template name="class">
@@ -92,25 +93,99 @@ Clean html extracted from epub of some oddities
     </xsl:if>
   </xsl:template>
 
-  <xsl:template match="html:p">
+  <xsl:template name="atts">
+    <xsl:variable name="props">
+      <xsl:call-template name="class_props"/>
+    </xsl:variable>
+    <xsl:apply-templates select="@*[name() != 'class']"/>
+    <xsl:call-template name="class">
+      <xsl:with-param name="suffix" select="$props"/>
+    </xsl:call-template>
+  </xsl:template>
+
+  <xsl:template match="html:p" name="p">
     <xsl:variable name="mixed">
       <xsl:call-template name="mixed"/>
     </xsl:variable>
     <xsl:variable name="props">
       <xsl:call-template name="class_props"/>
     </xsl:variable>
+    <xsl:variable name="count" select="count(*)"/>
+    <xsl:variable name="num">
+      <xsl:number/>
+    </xsl:variable>
     <xsl:choose>
-      <xsl:when test="false()"/>
-      <xsl:otherwise>
+      <xsl:when test="$mixed != ''">
+        <p>
+          <xsl:call-template name="atts"/>
+          <xsl:apply-templates/>
+        </p>
+      </xsl:when>
+      <xsl:when test="$count = 1 and html:img">
+        <figure>
+          <xsl:call-template name="atts"/>
+          <xsl:apply-templates/>
+        </figure>
+      </xsl:when>
+      <!-- usually spacing -->
+      <xsl:when test="$count = 1 and html:br">
+        <p> </p>
+      </xsl:when>
+      <!-- <p> contents, only one <i> or <em> -->
+      <xsl:when test="$count = 1">
+        <xsl:variable name="name" select="name(*[1])"/>
+        <xsl:variable name="suffix">
+          <xsl:choose>
+            <xsl:when test="$name = 'i'">italic</xsl:when>
+            <xsl:when test="$name = 'em'">italic</xsl:when>
+            <xsl:when test="$name = 'span'">
+              <xsl:call-template name="class_props">
+                <xsl:with-param name="class" select="*/@class"/>
+              </xsl:call-template>
+            </xsl:when>
+            <xsl:otherwise>
+              <xsl:value-of select="$name"/>
+            </xsl:otherwise>
+          </xsl:choose>
+        </xsl:variable>
         <p>
           <xsl:apply-templates select="@*[name() != 'class']"/>
           <xsl:call-template name="class">
-            <xsl:with-param name="suffix" select="$props"/>
+            <xsl:with-param name="suffix" select="concat($props, ' ', $suffix)"/>
           </xsl:call-template>
+          <xsl:apply-templates select="*/node()"/>
+        </p>
+      </xsl:when>
+      <!-- empty para at start of a section -->
+      <xsl:when test="$count = 0 and $num = 1"/>
+      <xsl:when test="$count = 0">
+        <!-- probably a spacer -->
+        <p> </p>
+      </xsl:when>
+      <xsl:otherwise>
+        <p>
+          <xsl:call-template name="atts"/>
           <xsl:apply-templates/>
         </p>
       </xsl:otherwise>
     </xsl:choose>
+  </xsl:template>
+
+  <xsl:template match="html:body">
+    <xsl:variable name="mixed">
+      <xsl:call-template name="mixed"/>
+    </xsl:variable>
+    <xsl:variable name="count" select="count(*)"/>
+    <body>
+      <xsl:choose>
+        <xsl:when test="$mixed = '' and $count = 1">
+          <xsl:apply-templates select="*/node()"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:apply-templates/>
+        </xsl:otherwise>
+      </xsl:choose>
+    </body>
   </xsl:template>
 
   <xsl:template match="html:div">
@@ -122,10 +197,10 @@ Clean html extracted from epub of some oddities
         <xsl:with-param name="class" select="@class"/>
       </xsl:call-template>
     </xsl:variable>
-
+    <xsl:variable name="count" select="count(*)"/>
 
     <xsl:choose>
-      <!-- with a title, let’s bet it is a section -->
+      <!-- with a title, let’s bet it is a section, maybe we should check it’s not unique -->
       <xsl:when test="html:h1 | html:h2 | html:h3">
         <section>
           <xsl:apply-templates select="@*[name() != 'class']"/>
@@ -135,85 +210,20 @@ Clean html extracted from epub of some oddities
           <xsl:apply-templates/>
         </section>
       </xsl:when>
-      <!-- text content, a para <p>? -->
       <xsl:when test="$mixed != ''">
-        <p>
-          <xsl:apply-templates select="@*[name() != 'class']"/>
-          <xsl:call-template name="class">
-            <xsl:with-param name="suffix" select="$props"/>
-          </xsl:call-template>
-          <xsl:apply-templates/>
-        </p>
+        <xsl:call-template name="p"/>
       </xsl:when>
-      <!-- One <i> -->
-      <!--
-      <xsl:when test="$mixed = '' and count(*) = 1 and html:i">
-        <xsl:call-template name="div">
-          <xsl:with-param name="style">i</xsl:with-param>
-        </xsl:call-template>
-      </xsl:when>
-      -->
-      <xsl:when test="html:img">
-        <figure>
-          <xsl:apply-templates select="@*[name() != 'class']"/>
-          <xsl:call-template name="class">
-            <xsl:with-param name="suffix" select="$props"/>
-          </xsl:call-template>
-          <xsl:apply-templates/>
-        </figure>
-      </xsl:when>
-      <!-- usually spacing -->
-      <xsl:when test="html:br">
-        <p> </p>
+      <!-- artificial hierachy ? -->
+      <xsl:when test="$count = 1 and (html:article | html:div | html:section)">
+        <xsl:apply-templates select="*/node()"/>
       </xsl:when>
       <xsl:otherwise>
-        <div>
-          <xsl:apply-templates select="@*[name() != 'class']"/>
-          <xsl:call-template name="class">
-            <xsl:with-param name="suffix" select="$props"/>
-          </xsl:call-template>
-          <xsl:apply-templates/>
-        </div>
+        <xsl:call-template name="p"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
   
   
-  <xsl:template name="div__">
-    <xsl:param name="style"/>
-    <xsl:param name="element" select="name()"/>
-    <xsl:variable name="props">
-      <xsl:call-template name="class_props">
-        <xsl:with-param name="class" select="@class"/>
-      </xsl:call-template>
-    </xsl:variable>
-    <xsl:variable name="class">
-      <xsl:call-template name="class_clean">
-        <xsl:with-param name="class" select="@class"/>
-      </xsl:call-template>
-      <xsl:text> </xsl:text>
-      <xsl:value-of select="$props"/>
-      <xsl:text> </xsl:text>
-      <xsl:value-of select="$style"/>
-    </xsl:variable>
-    <xsl:element name="{$element}">
-      <xsl:apply-templates select="@*[local-name() != 'class']"/>
-      <xsl:choose>
-        <!-- automatic style, keep ? -->
-        <!--
-        <xsl:when test="translate(substring($class, 2), '0123456789', '') = ''">
-          
-        </xsl:when>
-        -->
-        <xsl:when test="normalize-space($class) != ''">
-          <xsl:attribute name="class">
-            <xsl:value-of select="normalize-space($class)"/>
-          </xsl:attribute>
-        </xsl:when>
-      </xsl:choose>
-      <xsl:apply-templates/>
-    </xsl:element>
-  </xsl:template>
 
   <xsl:template match="html:template[@id='css']"/>
 
