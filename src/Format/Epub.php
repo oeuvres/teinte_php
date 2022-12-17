@@ -188,6 +188,8 @@ class Epub extends Zip
         $dom = Xsl::loadXml($xml);
         // get an html from the toc with includes
         $sections = Xsl::transformToXml(self::$xsl_dir.'html_tei/ncx_html.xsl', $dom);
+
+
         $sections = preg_replace(
             ["/<body[^>]*>/", "/<\/body>/"],
             ["", ""],
@@ -198,14 +200,19 @@ class Epub extends Zip
             '/<content src="([^"]+)"( to="([^"]+)")?\/>/',
             function ($matches) {                
                 if (isset($matches[3])) {
-                    return "\n" . $this->chop($matches[1], $matches[3]) . "\n";
+                    return "\n" 
+                    . $this->chop($matches[1], $matches[3]) 
+                    . "\n";
                 }
                 else {
-                    return "\n" . $this->chop($matches[1]) . "\n";
+                    return "\n" 
+                    . $this->chop($matches[1]) 
+                    . "\n";
                 }
             },
             $sections
         );
+        // echo $sections;
         return $sections;
     }
 
@@ -344,9 +351,6 @@ class Epub extends Zip
     public function chop(string $from, ?string $to = null)
     {
         $html = "";
-
-        if ($to) $html .= "<!-- $from -> $to -->\n";
-        else $html .= "<!-- $from -->\n";
         $from_file = $from;
         $from_anchor = "";
         if ($pos = strpos($from, '#')) {
