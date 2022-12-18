@@ -9,6 +9,7 @@
 
 namespace Oeuvres\Teinte\Format;
 
+use Exception;
 use Oeuvres\Kit\{Filesys, I18n, Log, Parse};
 
 /**
@@ -141,6 +142,10 @@ class File
     */
     public function contents(): string
     {
+        if (!isset($this->file)) {
+            Log::error(I18n::_('File.contents'));
+            return null;
+        }
         if ($this->contents === null) {
             $this->contents = file_get_contents($this->file);
         }
