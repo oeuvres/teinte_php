@@ -187,6 +187,10 @@ Clean html extracted from epub of some oddities
           <xsl:apply-templates/>
         </figure>
       </xsl:when>
+      <!-- maybe page break, at least anchor -->
+      <xsl:when test="$count = 1 and html:a and normalize-space(.) = ''">
+          <xsl:apply-templates/>
+      </xsl:when>
       <!-- usually spacing -->
       <xsl:when test="$count = 1 and html:br">
         <p> </p>
@@ -258,16 +262,22 @@ Clean html extracted from epub of some oddities
       </xsl:call-template>
     </xsl:variable>
     <xsl:variable name="count" select="count(*)"/>
+    <!-- 
+      SLOW | ../html:p[translate(., '  &#10;&#9;&#13;', '') != '']
+      | ../html:p[text()[normalize-space(.) != '']]
+      | ../html:div[text()[normalize-space(.) != '']] 
+    -->
     <xsl:variable name="bros" select="count(
         ../html:blockquote
-      | ../html:div[text()[normalize-space(.) != '']] 
       | ../html:ol
-      | ../html:p
       | ../html:ul
+      | ../html:p[text()[normalize-space(.) != '']]
     )"/>
+    <!-- 
+    -->
     <xsl:variable name="children" select="count(
-        html:div[text()[normalize-space(.) != '']] 
-      | html:p
+        html:p
+      | html:div[text()[normalize-space(.) != '']] 
     )"/>
     <xsl:choose>
       <!-- mixed content, it’s a para -->
