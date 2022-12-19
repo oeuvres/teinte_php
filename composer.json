@@ -13,6 +13,7 @@
         "php": ">=7.2",
         "erusev/parsedown-extra": "dev-master",
         "oeuvres/kit": "dev-main",
+        "oeuvres/xsl": "dev-main",
         "ext-tidy": "*"
     },
     "autoload": {
