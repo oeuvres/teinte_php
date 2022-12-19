@@ -9,7 +9,6 @@
 
 namespace Oeuvres\Teinte\Format;
 
-use Exception;
 use Oeuvres\Kit\{Filesys, I18n, Log, Parse};
 
 /**
@@ -23,8 +22,6 @@ class File
     private static array $ext2format = [];
     /** Properties for a format */
     private static array $formats = [];
-    /** Where is the xsl pack, set in one place, do not repeat */
-    static protected ?string $xsl_dir;
     /** filepath */
     protected ?string $file;
     /** filename without extension */
@@ -41,8 +38,6 @@ class File
         if (self::$init) return;
         self::$ext2format = Parse::json(file_get_contents(__DIR__ . '/ext2format.json'));
         self::$formats = Parse::json(file_get_contents(__DIR__ . '/formats.json'));
-        self::$xsl_dir = dirname(__DIR__) . "/xsl/";
-        I18n::load(dirname(__DIR__) . '/teinte_en.tsv');
         self::$init = true;
     }
 

@@ -11,7 +11,8 @@
 namespace Oeuvres\Teinte\Tei2;
 
 use DOMDocument;
-use Oeuvres\Kit\{Filesys, Log, Xsl};
+use Oeuvres\Kit\{Filesys, Log, Xt};
+use Oeuvres\Xsl\{Xpack};
 
 /**
  * A sinmple Teidoc exporter, with only one xslt
@@ -26,8 +27,8 @@ abstract class Tei2simple extends AbstractTei2
     {
         Log::info("Tei2\033[92m" . static::NAME . "->toUri()\033[0m " . $dstFile);
         if ($pars === null) $pars = self::$pars;
-        Xsl::transformToUri(
-            self::$xsl_dir . static::XSL,
+        Xt::transformToUri(
+            Xpack::dir() . static::XSL,
             $dom,
             $dstFile,
             $pars,
@@ -37,8 +38,8 @@ abstract class Tei2simple extends AbstractTei2
     static public function toXml(DOMDocument $dom, ?array $pars = null): string
     {
         if ($pars === null) $pars = self::$pars;
-        return Xsl::transformToXml(
-            self::$xsl_dir . static::XSL,
+        return Xt::transformToXml(
+            Xpack::dir() . static::XSL,
             $dom,
             $pars,
         );
@@ -47,8 +48,8 @@ abstract class Tei2simple extends AbstractTei2
     static public function toDoc(DOMDocument $dom, ?array $pars = null): DOMDocument
     {
         if ($pars === null) $pars = self::$pars;
-        return Xsl::transformToDoc(
-            self::$xsl_dir . static::XSL,
+        return Xt::transformToDoc(
+            Xpack::dir() . static::XSL,
             $dom,
             $pars,
         );

@@ -10,9 +10,7 @@
 namespace Oeuvres\Teinte\Format;
 
 use Exception, DOMDocument, DOMXpath;
-use Psr\Log\{LoggerInterface, LoggerAwareInterface, NullLogger};
-use Oeuvres\Kit\{Xsl};
-use Oeuvres\Teinte\Tei2\{TeiExportFactory};
+use Oeuvres\Kit\{Xt};
 
 /**
  * Tei exports are designed as a Strategy pattern
@@ -58,7 +56,7 @@ class Xml extends File
     {
         $xml = static::lint($xml);
         $this->xml = $xml;
-        $this->dom = Xsl::loadXml($this->xml);
+        $this->dom = Xt::loadXml($this->xml);
         if (!$this->dom) {
             throw new Exception("XML malformation");
         }
@@ -81,7 +79,7 @@ class Xml extends File
     public function xpath()
     {
         if (isset($this->xpath) && $this->xpath) return $this->xpath;
-        $this->xpath = Xsl::xpath($this->dom);
+        $this->xpath = Xt::xpath($this->dom);
         return $this->xpath;
     }
 

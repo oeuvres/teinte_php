@@ -12,6 +12,7 @@ if (count($argv) < 2) {
 }
 $src_file = $argv[1];
 $dst_dir = __DIR__ . "/out/";
+Filesys::mkdir($dst_dir);
 $dst_name = pathinfo($src_file, PATHINFO_FILENAME);
 
 $epub = new Epub();

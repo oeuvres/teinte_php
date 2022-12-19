@@ -10,7 +10,8 @@
 namespace Oeuvres\Teinte\Format;
 
 use DOMDocument, ErrorException;
-use Oeuvres\Kit\{Filesys, Log, Parse, Xsl};
+use Oeuvres\Kit\{Filesys, Log, Parse, Xt};
+use Oeuvres\Xsl\{Xpack};
 
 
 /**
@@ -38,7 +39,7 @@ class Docx extends Zip
     {
         if (self::$init) return;
         parent::init();
-        $pcre_tsv = self::$xsl_dir . 'docx/teilike_pcre.tsv';
+        $pcre_tsv = Xpack::dir() . 'docx/teilike_pcre.tsv';
         self::$preg = Parse::pcre_tsv($pcre_tsv);
         self::$init = true;
     }
@@ -134,7 +135,7 @@ class Docx extends Zip
 ";
         }
         // add custom style table here for tag mapping
-        $content = file_get_contents(self::$xsl_dir . 'docx/styles.xml');
+        $content = file_get_contents(Xpack::dir() . 'docx/styles.xml');
         $content = preg_replace('/^.*<sheet/ms', '<sheet', $content);
         $this->xml .= "
         <pkg:part pkg:contentType=\"$type\" pkg:name=\"/teinte/styles.xml\">
@@ -151,14 +152,14 @@ class Docx extends Zip
     function teilike():void
     {
         // DO NOT indent, reuse dom object with right props
-        Xsl::loadXml($this->xml, $this->dom);
-        $this->dom = Xsl::transformToDoc(
-            self::$xsl_dir . 'docx/docx_teilike.xsl', 
+        Xt::loadXml($this->xml, $this->dom);
+        $this->dom = Xt::transformToDoc(
+            Xpack::dir() . 'docx/docx_teilike.xsl', 
             $this->dom,
         );
         // out that as xml for pcre
-        $this->xml = Xsl::transformToXml(
-            self::$xsl_dir . 'docx/divs.xsl', 
+        $this->xml = Xt::transformToXml(
+            Xpack::dir() . 'docx/divs.xsl', 
             $this->dom,
         );
     }
@@ -182,7 +183,7 @@ class Docx extends Zip
     function tmpl(?string $tmpl=null): void
     {
         if (!$tmpl) {
-            $tmpl = self::$xsl_dir . 'docx/default.xml';
+            $tmpl = Xpack::dir() . 'docx/default.xml';
         }
         // resolve relative path to working dir
         if (!Filesys::isabs($tmpl)) {
@@ -196,10 +197,10 @@ class Docx extends Zip
         $tmpl = "file:///" . str_replace(DIRECTORY_SEPARATOR, "/", $tmpl);
         // xml should come from pcre transform
 
-        Xsl::loadXml($this->xml, $this->dom);
+        Xt::loadXml($this->xml, $this->dom);
         // TEI regularisations and model fusion
-        $this->dom = Xsl::transformToDoc(
-            self::$xsl_dir . 'docx/tei_tmpl.xsl',
+        $this->dom = Xt::transformToDoc(
+            Xpack::dir() . 'docx/tei_tmpl.xsl',
             $this->dom,
             array("template" => $tmpl)
         );

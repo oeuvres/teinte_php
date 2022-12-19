@@ -35,8 +35,8 @@ class Tei2split extends AbstractTei2
         }
         $pars = array_merge($pars, array("dst_dir" => $dst_dir));
         // Log::info("Tei2\033[92m" . static::NAME . "->toUri()\033[0m " . $dst_dir);
-        return Xsl::transformToXml(
-            self::$xsl_dir.static::XSL,
+        return Xt::transformToXml(
+            Xpack::dir().static::XSL,
             $dom,
             $pars,
         );

@@ -10,7 +10,8 @@
 namespace Oeuvres\Teinte\Tei2;
 
 use Exception, DOMDocument, ZipArchive;
-use Oeuvres\Kit\{Check, Log, Filesys, Xsl};
+use Oeuvres\Kit\{Check, Log, Filesys, Xt};
+use Oeuvres\Xsl\{Xpack};
 Check::extension('zip');
 
 /**
@@ -35,7 +36,7 @@ class Tei2docx extends AbstractTei2
     {
         parent::init();
         // set default template
-        self::$template_docx = self::$xsl_dir . '/tei_docx/template.docx';
+        self::$template_docx = Xpack::dir() . '/tei_docx/template.docx';
     }
 
 
@@ -99,7 +100,7 @@ class Tei2docx extends AbstractTei2
         $zip->open($dst_file);
 
         // get a default lang from the source TEI, set it in the style.xml
-        $xpath = Xsl::xpath($dom);
+        $xpath = Xt::xpath($dom);
         $entries = $xpath->query("/*/@xml:lang");
         $lang = null;
         foreach ($entries as $node) {
@@ -130,8 +131,8 @@ class Tei2docx extends AbstractTei2
             . str_replace(DIRECTORY_SEPARATOR, "/", $templPath);
         // $this->logger->debug(__METHOD__.' $templPath='.$templPath);
 
-        $xml = Xsl::transformToXml(
-            self::$xsl_dir . '/tei_docx/tei_docx_comments.xsl', 
+        $xml = Xt::transformToXml(
+            Xpack::dir() . '/tei_docx/tei_docx_comments.xsl', 
             $dom,
         );
         $zip->addFromString('word/comments.xml', $xml);
@@ -139,8 +140,8 @@ class Tei2docx extends AbstractTei2
         // generation of word/document.xml needs some links
         // from template, espacially for head and foot page.
         file_put_contents($templPath, $zip->getFromName('word/document.xml'));
-        $xml = Xsl::transformToXml(
-            self::$xsl_dir . '/tei_docx/tei_docx.xsl',
+        $xml = Xt::transformToXml(
+            Xpack::dir() . '/tei_docx/tei_docx.xsl',
             $dom,
             array(
                 'templPath' => $templPath,
@@ -158,8 +159,8 @@ class Tei2docx extends AbstractTei2
             $templPath, 
             $zip->getFromName('word/_rels/document.xml.rels')
         );
-        $xml = Xsl::transformToXml(
-            self::$xsl_dir . '/tei_docx/tei_docx_rels.xsl',
+        $xml = Xt::transformToXml(
+            Xpack::dir() . '/tei_docx/tei_docx_rels.xsl',
             $dom,
             array(
                 'templPath' => $templPath,
@@ -168,8 +169,8 @@ class Tei2docx extends AbstractTei2
         $zip->addFromString('word/_rels/document.xml.rels', $xml);
 
 
-        $xml = Xsl::transformToXml(
-            self::$xsl_dir . '/tei_docx/tei_docx_fn.xsl',
+        $xml = Xt::transformToXml(
+            Xpack::dir() . '/tei_docx/tei_docx_fn.xsl',
             $dom,
         );
         $xml = preg_replace(
@@ -180,8 +181,8 @@ class Tei2docx extends AbstractTei2
         $zip->addFromString('word/footnotes.xml', $xml);
 
 
-        $xml = Xsl::transformToXml(
-            self::$xsl_dir . '/tei_docx/tei_docx_fnrels.xsl',
+        $xml = Xt::transformToXml(
+            Xpack::dir() . '/tei_docx/tei_docx_fnrels.xsl',
             $dom,
         );
         $zip->addFromString('word/_rels/footnotes.xml.rels', $xml);

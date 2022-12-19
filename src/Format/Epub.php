@@ -13,7 +13,9 @@ namespace Oeuvres\Teinte\Format;
 
 use DOMDocument, DOMElement, DOMNode, DOMNodeList, DOMXpath;
 use Exception;
-use Oeuvres\Kit\{Check, I18n, Log, Parse, Xsl};
+use Oeuvres\Kit\{Check, I18n, Log, Parse, Xt};
+use Oeuvres\Xsl\{Xpack};
+
 
 Check::extension('tidy');
 /**
@@ -68,9 +70,9 @@ class Epub extends Zip
         $this->style = new CssModel();
         $this->html = '';
         // useful for dev
-        // self::$xsl_dir = dirname(__DIR__, 3) . '/teinte_xsl/';
+        // Xpack::dir() = dirname(__DIR__, 3) . '/teinte_xsl/';
         // load a regex program
-        $pcre_tsv = self::$xsl_dir . 'html_tei/html_pcre.tsv';
+        $pcre_tsv = Xpack::dir() . 'html_tei/html_pcre.tsv';
         $this->preg = Parse::pcre_tsv($pcre_tsv);
 
     }
@@ -101,7 +103,7 @@ class Epub extends Zip
         $this->opf_dir = dirname($this->opf_path);
         if ($this->opf_dir == ".") $this->opf_dir = "";
         else $this->opf_dir .= "/"; // ensure ending slash
-        $this->opf_dom = Xsl::loadXml($this->opf_xml);
+        $this->opf_dom = Xt::loadXml($this->opf_xml);
         // validate minimum required elements
         $ok = true;
         foreach (['metadata', 'manifest', 'spine'] as $el) {
@@ -159,9 +161,9 @@ class Epub extends Zip
 </article>
 ";
         // print $html;
-        $dom = Xsl::loadXml($html);
-        $this->dom = Xsl::transformToDoc(
-            self::$xsl_dir . 'html_tei/epub_teinte_html.xsl', 
+        $dom = Xt::loadXml($html);
+        $this->dom = Xt::transformToDoc(
+            Xpack::dir() . 'html_tei/epub_teinte_html.xsl', 
             $dom
         );
     }
@@ -185,9 +187,9 @@ class Epub extends Zip
         $xml .= preg_replace("/^.*?(<\p{L}+)/su", '$1', $toc);
         $xml .= preg_replace("/^.*?(<\p{L}+)/su", '$1', $this->opf_xml);
         $xml .= "</pack>\n";
-        $dom = Xsl::loadXml($xml);
+        $dom = Xt::loadXml($xml);
         // get an html from the toc with includes
-        $sections = Xsl::transformToXml(self::$xsl_dir.'html_tei/ncx_html.xsl', $dom);
+        $sections = Xt::transformToXml(Xpack::dir().'html_tei/ncx_html.xsl', $dom);
 
 
         $sections = preg_replace(
@@ -226,17 +228,17 @@ class Epub extends Zip
         // produce a <teiHeader>
         $metadata = $this->opf_dom->getElementsByTagName('metadata')->item(0);
 
-        $dom = Xsl::dom();
+        $dom = Xt::dom();
         $metadata = $dom->importNode($metadata, true);
         $dom->appendChild($metadata);
 
-        $teiHeader = Xsl::transformToDoc(
-            self::$xsl_dir . 'html_tei/epub_dc_tei.xsl', 
+        $teiHeader = Xt::transformToDoc(
+            Xpack::dir() . 'html_tei/epub_dc_tei.xsl', 
             $dom
         );
         // toDom for indent-
-        $dom = Xsl::transformToDoc(
-            self::$xsl_dir . 'html_tei/html_tei.xsl', 
+        $dom = Xt::transformToDoc(
+            Xpack::dir() . 'html_tei/html_tei.xsl', 
             $this->dom
         );
         $teiHeader = $dom->importNode($teiHeader->documentElement, true);

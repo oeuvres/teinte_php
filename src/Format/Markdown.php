@@ -13,7 +13,8 @@ namespace Oeuvres\Teinte\Format;
 
 use Exception;
 use ParsedownExtra;
-use Oeuvres\Kit\{Filesys, I18n, Log, Parse, Xsl};
+use Oeuvres\Kit\{Filesys, I18n, Log, Xt};
+use Oeuvres\Xsl\{Xpack};
 
 /**
  * An Html text for content import
@@ -34,7 +35,7 @@ class Markdown extends File
         self::$parser = new ParsedownExtra();
         self::$init = true;
         // useful for dev
-        // self::$xsl_dir = dirname(__DIR__, 3) . '/teinte_xsl/';
+        // Xpack::dir() = dirname(__DIR__, 3) . '/teinte_xsl/';
 
     }
 
@@ -114,9 +115,9 @@ class Markdown extends File
             $this->html();
         }
         // is it xml conformant ? let’s see
-        $dom = Xsl::loadXml($this->html);
-        $tei = Xsl::transformToXml(
-            self::$xsl_dir . 'html_tei/html_tei.xsl', 
+        $dom = Xt::loadXml($this->html);
+        $tei = Xt::transformToXml(
+            Xpack::dir() . 'html_tei/html_tei.xsl', 
             $dom
         );
         return $tei;

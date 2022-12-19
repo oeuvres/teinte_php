@@ -12,6 +12,7 @@ namespace Oeuvres\Teinte\Tei2;
 
 use DOMDocument;
 use Oeuvres\Kit\{Filesys, Log, Parse};
+use Oeuvres\Xsl\{Xpack};
 
 /**
  * A Tei document exporter.
@@ -20,8 +21,6 @@ abstract class AbstractTei2
 {
     /** Do init at startup */
     static private bool $init = false;
-    /** Where is the xsl pack, set in one place, do not repeat */
-    static protected ?string $xsl_dir = null;
     /** Parameters for all (?) transformers */
     static protected array $pars = [];
     /** Prefered extension for exported files */
@@ -37,8 +36,6 @@ abstract class AbstractTei2
     static public function init()
     {
         if (self::$init) return;
-        // TO THINK, good way to configure xsl pack
-        self::$xsl_dir = dirname(__DIR__, 2) . "/src/xsl/";
         self::$transfos = Parse::json(file_get_contents(__DIR__ . '/tei2.json'));
         self::$init = true;
     }
