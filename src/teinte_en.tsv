@@ -1,6 +1,8 @@
 key	message
 Epub.load	No file loaded, use Epub::load($epub_file) before
+Epub.container404	“%s”, epub invalid, no “META-INF/container.xml” entry found
 Epub.opf400	“%s”, epub invalid, no link found for an opf file, in “META-INF/container.xml” entry
+Epub.opf0	“%s”, epub invalid, opf file empty
 Epub.opfel404	“%s!%s”, epub invalid, <%s> element required
 Epub.ncx400	“%s!%s”, epub invalid, no link found for a toc.ncx
 Epub.spine404	“%s”, <spine> invalid, idref="%s" nor fond in <manifest>

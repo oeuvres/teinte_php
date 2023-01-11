@@ -38,6 +38,7 @@ class File
         if (self::$init) return;
         self::$ext2format = Parse::json(file_get_contents(__DIR__ . '/ext2format.json'));
         self::$formats = Parse::json(file_get_contents(__DIR__ . '/formats.json'));
+        I18n::load(dirname(__DIR__) . '/teinte_en.tsv');
         self::$init = true;
     }
 

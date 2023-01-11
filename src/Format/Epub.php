@@ -89,14 +89,27 @@ class Epub extends Zip
             return false;
         }
         if (null === ($cont = $this->get('META-INF/container.xml'))) {
+            Log::warning(I18n::_('Epub.container404', $file));
             return false;
         }
-        if (!preg_match('@full-path="([^"]+)"@', $cont, $matches)) {
+        // seen, container.xml in UTF-16
+        $dom = Xt::loadXml($cont);
+        $opf_path = null;
+        foreach ($dom->getElementsByTagNameNS(
+            'urn:oasis:names:tc:opendocument:xmlns:container', 
+            'rootfile') 
+            as $el
+        ) {
+            $opf_path = $el->getAttribute('full-path');
+        }
+        if (!$opf_path) {
             Log::warning(I18n::_('Epub.opf400', $file));
             return false;
         }
-        $this->opf_path = urldecode($matches[1]);
+
+        $this->opf_path = urldecode($opf_path);
         if (null === ($this->opf_xml = $this->get($this->opf_path))) {
+            Log::warning(I18n::_('Epub.opf0', $file));
             return false;
         }
         // set dir for path resolution in opf
