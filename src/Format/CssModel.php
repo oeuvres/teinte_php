@@ -81,6 +81,7 @@ class CssModel
      */
     public function parse($css_string)
     {
+        if (!$css_string) return;
         // a complete css parser should here detailed compact declarations like font: …
         preg_match_all( '/(?ims)([a-z0-9\s\.\:#_\-@,]+)\{([^\}]*)\}/', $css_string, $rules);
         foreach ($rules[0] as $i => $x){

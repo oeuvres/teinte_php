@@ -13,7 +13,7 @@ namespace Oeuvres\Teinte\Format;
 
 use DOMDocument, DOMElement, DOMNode, DOMNodeList, DOMXpath;
 use Exception;
-use Oeuvres\Kit\{Check, I18n, Log, Parse, Xt};
+use Oeuvres\Kit\{Check, Filesys, I18n, Log, Parse, Xt};
 use Oeuvres\Xsl\{Xpack};
 
 
@@ -313,6 +313,7 @@ class Epub extends Zip
             $type = $node->getAttribute("media-type");
             if ($type == "text/css") {
                 $css = $this->get($this->opf_dir . $href);
+                if ($css === null) continue;
                 $this->style->parse($css);
                 Log::debug("load css $this->opf_dir$href");
             }

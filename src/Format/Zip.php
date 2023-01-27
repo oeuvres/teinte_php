@@ -10,7 +10,7 @@
 namespace Oeuvres\Teinte\Format;
 
 use Exception, ZipArchive;
-use Oeuvres\Kit\{Check, I18n, Log};
+use Oeuvres\Kit\{Check, Filesys, I18n, Log};
 // required extension
 Check::extension('zip');
 
@@ -58,6 +58,7 @@ class Zip extends File
      */
     public function get(string $name):?string
     {
+        $name = Filesys::pathnorm($name);
         if (false === $this->zip->statName($name)) {
             Log::warning(I18n::_('Zip.404', $this->file, $name));
             return null;
