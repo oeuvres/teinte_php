@@ -26,11 +26,13 @@ class Docx extends Zip
     /** A search replace program */
     static protected ?array $preg;
     /** A user search replace program */
-    static protected ?array $user_preg;
+    protected ?array $user_preg;
     /** Store XML as a string, maybe reused */
     protected ?string $xml = null;
     /** DOM Document to process */
     protected ?DOMDocument $dom = null;
+    /** Absolute file:/// path to an XML template  */
+    protected ?string $tmpl = null;
 
     /**
      * Inialize static variables
@@ -41,6 +43,7 @@ class Docx extends Zip
         parent::init();
         $pcre_tsv = Xpack::dir() . 'docx/teilike_pcre.tsv';
         self::$preg = Parse::pcre_tsv($pcre_tsv);
+
         self::$init = true;
     }
 
@@ -53,6 +56,8 @@ class Docx extends Zip
         $this->dom->substituteEntities = true;
         $this->dom->preserveWhiteSpace = true;
         $this->dom->formatOutput = false;
+        $this->tmpl = Xpack::dir() . 'docx/default.xml';
+        $this->tmpl = "file:///" . str_replace(DIRECTORY_SEPARATOR, "/", $this->tmpl);
     }
 
     function xml(): string
@@ -172,67 +177,54 @@ class Docx extends Zip
         // clean xml oddities
         $this->xml = preg_replace(self::$preg[0], self::$preg[1], $this->xml);
         // custom patterns
-        if (isset(self::$user_preg)) {
-            $this->xml = preg_replace(self::$user_preg[0], self::$user_preg[1], $this->xml);
+        if (isset($this->user_preg)) {
+            $this->xml = preg_replace($this->user_preg[0], $this->user_preg[1], $this->xml);
         }
     }
 
     /**
      * Clean teilike and apply template
      */
-    function tmpl(?string $tmpl=null): void
+    function tmpl(): void
     {
-        if (!$tmpl) {
-            $tmpl = Xpack::dir() . 'docx/default.xml';
-        }
-        // resolve relative path to working dir
-        if (!Filesys::isabs($tmpl)) {
-            $tmpl = getcwd() . '/' . $tmpl;
-        }
-        if (($message = Filesys::readable($tmpl))  !== true) {
-            Log::error($message);
-            throw new ErrorException("Tei template not found");
-        }
-        // normalize windows path for xsltproc
-        $tmpl = "file:///" . str_replace(DIRECTORY_SEPARATOR, "/", $tmpl);
         // xml should come from pcre transform
-
         Xt::loadXml($this->xml, $this->dom);
         // TEI regularisations and model fusion
         $this->dom = Xt::transformToDoc(
             Xpack::dir() . 'docx/tei_tmpl.xsl',
             $this->dom,
-            array("template" => $tmpl)
+            array("template" => $this->tmpl)
         );
         // delete old xml
         $this->xml = null;
     }
 
     /**
-     * Set a template directory
-     * usually the same for a collection of docs.
+     * Record a regex program to clean file
      */
-    function template(?string $dir = null)
+    function user_pcre(string $pcre_file)
     {
-        $dir = Filesys::normdir($dir);
-        if (!$dir) return;
-        // try to load custom regex
-        $pcre_tsv = $dir . basename($dir) . "_pcre.tsv";
-        // be nice take first file in folder
-        if (!is_file($pcre_tsv)) {
-            $glob = glob($dir . "*_pcre.tsv");
-            if (!$glob || count($glob) < 1) {
-                $pcre_tsv = null;
-            }
-            else {
-                $pcre_tsv = $glob[0];
-            }
+        if (!is_file($pcre_file)) {
+            Log::error("Docx > tei, user regex 404: $pcre_file");
+            return;
         }
-        if ($pcre_tsv) {
-            Log::info("Docx => TEI, user pattern loading: $pcre_tsv");
-            self::$user_preg = Parse::pcre_tsv($pcre_tsv);
-        }
+        Log::info("Docx > tei, user regex loading: $pcre_file");
+        $this->user_preg = Parse::pcre_tsv($pcre_file);
     }
+
+    /**
+     * Recod an XML file as a TEI template
+     */
+    function user_template(string $xml_file)
+    {
+        if (!is_file($xml_file)) {
+            Log::error("Docx > tei, user template 404: $xml_file");
+            return;
+        }
+        $this->tmpl = "file:///" . str_replace(DIRECTORY_SEPARATOR, "/", $xml_file);
+        Log::info("Docx > tei, user xml template: ". $this->tmpl);
+    }
+
 
 
 
