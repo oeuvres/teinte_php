@@ -204,7 +204,6 @@ class Epub extends Zip
         // get an html from the toc with includes
         $sections = Xt::transformToXml(Xpack::dir().'html_tei/ncx_html.xsl', $dom);
 
-
         $sections = preg_replace(
             ["/<body[^>]*>/", "/<\/body>/"],
             ["", ""],

@@ -2,6 +2,7 @@
 composer.lock
 /examples/data/_*
 /examples/out/
+/work
 
 # generated garbage (especially LaTeX)
 .~*

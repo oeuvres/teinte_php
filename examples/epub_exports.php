@@ -11,8 +11,7 @@ if (count($argv) < 2) {
     return Log::warning("A filename is waited as an argument");
 }
 $src_file = $argv[1];
-$dst_dir = __DIR__ . "/out/";
-Filesys::mkdir($dst_dir);
+$dst_dir = dirname($src_file) . '/';
 $dst_name = pathinfo($src_file, PATHINFO_FILENAME);
 
 $epub = new Epub();
