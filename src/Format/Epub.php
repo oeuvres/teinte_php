@@ -28,9 +28,9 @@ class Epub extends Zip
     /** path of the opf file */
     private ?string $opf_path;
     /** opf directory to solve relative path */
-    private ?string $opf_dir;
+    private ?string $opf_dir = '';
     /** toc directory to solve relative path */
-    private ?string $ncx_dir;
+    private ?string $ncx_dir = '';
     /** dom version of the opf */
     private ?DOMDocument $opf_dom;
     /** xpath version of the opf */
@@ -202,7 +202,11 @@ class Epub extends Zip
         $xml .= "</pack>\n";
         $dom = Xt::loadXml($xml);
         // get an html from the toc with includes
-        $sections = Xt::transformToXml(Xpack::dir().'html_tei/ncx_html.xsl', $dom);
+        $sections = Xt::transformToXml(
+            Xpack::dir().'html_tei/ncx_html.xsl', 
+            $dom,
+            ['ncx_dir' => $this->ncx_dir, 'opf_dir' => $this->opf_dir,]
+        );
 
         $sections = preg_replace(
             ["/<body[^>]*>/", "/<\/body>/"],
@@ -314,7 +318,7 @@ class Epub extends Zip
                 $css = $this->get($this->opf_dir . $href);
                 if ($css === null) continue;
                 $this->style->parse($css);
-                Log::debug("load css $this->opf_dir$href");
+                Log::debug("load css " . $this->opf_dir . $href);
             }
             $this->manifest[$id] = $href;
         }
@@ -376,10 +380,10 @@ class Epub extends Zip
         if ($to && ($pos = strpos($to, '#'))) {
             list($to_file, $to_anchor) = explode("#", $to);
         }
-        if ($to_file) $to_file = $this->ncx_dir . urldecode($to_file);
+        if ($to_file) $to_file = urldecode($to_file);
         
         // text to insert should be from one file only
-        $from_file = $this->ncx_dir . urldecode($from_file);
+        $from_file = urldecode($from_file);
         $contents = $this->get($from_file);
         if (!$contents) {
             $msg = I18n::_("Epub.chop.404", $this->file, $from_file);
