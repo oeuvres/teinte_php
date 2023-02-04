@@ -189,6 +189,7 @@ class Epub extends Zip
         // concat toc + spine
         $xml = "<pack>\n";
         $toc = $this->ncx_xml();
+        if (!$toc) $toc = '';
         $toc = preg_replace_callback(
             '/ src="([^"]*)"/',
             function ($matches) { 
