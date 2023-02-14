@@ -6,18 +6,56 @@ use Psr\Log\LogLevel;
 use Oeuvres\Kit\{Filesys, Log, LoggerCli};
 use Oeuvres\Teinte\Format\{Epub};
 
-Log::setLogger(new LoggerCli(LogLevel::DEBUG));
-if (count($argv) < 2) {
-    return Log::warning("A filename is waited as an argument");
-}
-$src_file = $argv[1];
-$dst_dir = dirname($src_file) . '/';
-$dst_name = pathinfo($src_file, PATHINFO_FILENAME);
 
-$epub = new Epub();
-$epub->load($src_file);
-Log::debug('start');
-file_put_contents($dst_dir . $dst_name . ".html", $epub->html());
-Log::debug('html');
-file_put_contents($dst_dir . $dst_name . ".xml", $epub->tei());
-Log::debug('tei');
+
+function help()
+{
+    $help = '
+    Tranform epub files in tei
+        php teinte.php (-d dst_dir)? "teidir/*.xml"+
+';
+    return $help;
+}
+
+function cli()
+{
+    global $argv;
+    Log::setLogger(new LoggerCli(LogLevel::DEBUG));
+
+
+    $shortopts = "";
+    $shortopts .= "d:"; // output directory
+    $options = getopt($shortopts, [], $rest_index);
+    $count = count($argv);
+    // no args, probably not correct
+    if ($rest_index >= $count) exit(help());
+    $dst_dir = "";
+    if (isset($options['d'])) {
+        $dst_dir = $options['d'];
+        Filesys::mkdir($dst_dir);
+    }
+    $dst_dir = Filesys::normdir($dst_dir);
+    // loop on globs
+    for (; $rest_index < $count; $rest_index++) {
+        crawl(
+            $argv[$rest_index],
+            $dst_dir,
+        );
+    }
+}
+
+function crawl($glob, $dst_dir)
+{
+    $html_dir = rtrim($dst_dir , '\\/') . '_html/';
+    Filesys::mkdir($html_dir);
+    foreach (glob($glob) as $src_file) {
+        Log::info($src_file);
+        $dst_name = pathinfo($src_file, PATHINFO_FILENAME);
+        $epub = new Epub();
+        $epub->load($src_file);
+        file_put_contents($html_dir. $dst_name . ".html", $epub->html());
+        file_put_contents($dst_dir . $dst_name . ".xml", $epub->tei());
+    }
+}
+
+cli();
