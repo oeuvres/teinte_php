@@ -12,7 +12,7 @@ function help()
 {
     $help = '
     Tranform epub files in tei
-        php teinte.php (-d dst_dir)? "teidir/*.xml"+
+        php epub_exports.php (-d dst_dir)? "epub_dir/*.epub"+
 ';
     return $help;
 }
