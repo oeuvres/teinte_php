@@ -56,12 +56,16 @@ class Xml extends File
     {
         $xml = static::lint($xml);
         $this->xml = $xml;
-        $this->dom = Xt::loadXml($this->xml);
+        // spaces are normalized upper, keep them
+        // set dom properties before loading
+        $dom = new DOMDocument();
+        $dom->substituteEntities = true;
+        $dom->preserveWhiteSpace = true;
+        $dom->formatOutput = false;
+        $this->dom = Xt::loadXml($this->xml, $dom);
         if (!$this->dom) {
             throw new Exception("XML malformation");
         }
-        // spaces are normalized upper, keep them
-        $this->dom->preserveWhiteSpace = true;
         return $this->dom;
     }
 
