@@ -95,6 +95,7 @@ class Zip extends File
             $name = $pathinfo['filename'];
             if (!isset($ls[$name])) $ls[$name] = [];
             $rec['name'] = $name;
+            $rec['format'] = $format;
             $rec['ext'] = ltrim($pathinfo['filename'], '.');
             $rec['bytes'] = $stat['size'];
             $rec['size'] = Filesys::bytes_human($rec['bytes']);
