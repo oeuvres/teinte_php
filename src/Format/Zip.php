@@ -57,7 +57,7 @@ class Zip extends File
      */
     public function zip():?ZipArchive
     {
-        return $this->$zip;
+        return $this->zip;
     }
 
     /**
@@ -89,17 +89,20 @@ class Zip extends File
             $stat = $this->zip->statIndex($i);
             $format = File::path2format($stat['name']);
             if (!isset($formats[$format])) continue;
+
+
             $rec = [];
             $rec['path'] = $stat['name'];
             $pathinfo = pathinfo($rec['path']);
             $name = $pathinfo['filename'];
+            // group files by key
             if (!isset($ls[$name])) $ls[$name] = [];
             $rec['name'] = $name;
             $rec['format'] = $format;
             $rec['ext'] = ltrim($pathinfo['filename'], '.');
             $rec['bytes'] = $stat['size'];
             $rec['size'] = Filesys::bytes_human($rec['bytes']);
-            $ls [$name] = $rec;
+            $ls[$name][] = $rec;
         }
         ksort($ls);
         return $ls;
