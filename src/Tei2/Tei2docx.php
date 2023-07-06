@@ -115,11 +115,13 @@ class Tei2docx extends AbstractTei2
             . str_replace(DIRECTORY_SEPARATOR, "/", $templPath);
         // $this->logger->debug(__METHOD__.' $templPath='.$templPath);
 
+        /* No more support for comments
         $xml = Xt::transformToXml(
             Xpack::dir() . '/tei_docx/tei_docx_comments.xsl', 
             $dom,
         );
         $zip->addFromString('word/comments.xml', $xml);
+        */
 
         // generation of word/document.xml needs some links
         // from template, espacially for head and foot page.
