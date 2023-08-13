@@ -52,7 +52,7 @@ class Tei_docx {
         if (count($pos_args) < 1) exit($help);
         $dst_dir = "";
         if (isset($options['d'])) {
-            $dst_dir = $options['d'];
+            $dst_dir = rtrim($options['d'], '\\/') . '/';
             Filesys::mkdir($dst_dir);
         }
         if (isset($options['t'])) {
@@ -62,7 +62,7 @@ class Tei_docx {
         foreach ($pos_args as $arg) {
             $glob = glob($arg);
             if (count($glob) > 1) {
-                Log::info("=== " + $glob + " ===");
+                Log::info("=== " . $arg . " ===");
             }
             foreach ($glob as $src_file) {
                 $src_name = pathinfo($src_file, PATHINFO_FILENAME);

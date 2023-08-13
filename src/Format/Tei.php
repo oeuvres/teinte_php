@@ -61,12 +61,12 @@ class Tei extends File
     }
 
     /**
-     * Load a dom directy, 
+     * Load a dom directly, 
      */
     public function loadDoc(DOMDocument $dom)
     {
         $this->teiReset();
-        $this->teiDoc = $dom;   
+        $this->teiDoc = $dom;
     }
 
     /**
@@ -320,7 +320,7 @@ class Tei extends File
      * $dstdir : a folder if images should be copied
      * return : a doc with updated links to image
      */
-    public function images($hrefdir = null, $dstdir = null)
+    public function imagesCopy($hrefdir = null, $dstdir = null)
     {
         if ($dstdir) $dstdir = rtrim($dstdir, '/\\') . '/';
         // $dom = $this->teiDoc->cloneNode(true); // do not clone, keep the change of links
@@ -329,21 +329,21 @@ class Tei extends File
         $nl = $dom->getElementsByTagNameNS('http://www.tei-c.org/ns/1.0', 'graphic');
         $pad = strlen('' . $nl->count());
         foreach ($nl as $el) {
-            $this->img($el->getAttributeNode("url"), str_pad(strval($count), $pad, '0', STR_PAD_LEFT), $hrefdir, $dstdir);
+            $this->graphic($el->getAttributeNode("url"), str_pad(strval($count), $pad, '0', STR_PAD_LEFT), $hrefdir, $dstdir);
             $count++;
         }
         /*
-    do not store images of pages, especially in tif
-    foreach ($doc->getElementsByTagNameNS('http://www.tei-c.org/ns/1.0', 'pb') as $el) {
-      $this->img($el->getAttributeNode("facs"), $hrefTei, $dstdir, $hrefSqlite);
-    }
-    */
+        do not store images of pages, especially in tif
+        foreach ($doc->getElementsByTagNameNS('http://www.tei-c.org/ns/1.0', 'pb') as $el) {
+        $this->img($el->getAttributeNode("facs"), $hrefTei, $dstdir, $hrefSqlite);
+        }
+        */
         return $dom;
     }
     /**
      * Process one image
      */
-    public function img($att, $count, $hrefdir = "", $dstdir = null)
+    private function graphic($att, $count, $hrefdir = "", $dstdir = null)
     {
         if (!isset($att) || !$att || !$att->value) {
             return;

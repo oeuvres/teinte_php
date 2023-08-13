@@ -37,7 +37,7 @@ trait Teiable
     }
 
     /**
-     * Return dom state
+     * Return dom state (maybe transformed and diverges from original)
      */
     function teiDoc(): DOMDocument
     {

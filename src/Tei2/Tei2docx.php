@@ -20,7 +20,6 @@ Check::extension('zip');
  */
 class Tei2docx extends AbstractTei2
 {
-    /** A docx file used as a template */
     const EXT = '.docx';
     const NAME = "docx";
 
