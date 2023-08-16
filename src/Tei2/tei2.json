@@ -17,6 +17,9 @@
     "iramuteq": {
         "label": "IRaMuteQ (formatted text)"
     },
+    "latex": {
+        "label": "LaTeX, a folder ready for XeLaTeX"
+    },
     "markdown": {
         "label": "Markdown (formatted text)"
     },
