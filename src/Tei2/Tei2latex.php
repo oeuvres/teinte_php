@@ -33,14 +33,13 @@ class Tei2latex  extends AbstractTei2
     protected $srcfile;
     static protected $latex_xsl;
     static protected $latex_meta_xsl;
-    // escape all text nodes
+    // escape all text nodes, use on text node in dom, not through xml &
     const LATEX_ESC = array(
-        '@\\\@u' => '\textbackslash', //before adding \ for escapings
-        '@(&amp;)@u' => '\\\$1',
-        '@([%\$#_{}])@u' => '\\\$1',
-        '@~@u' => '\textasciitilde',
-        '@\^@u' => '\textasciicircum',
-        '@(\p{Han}[\p{Han} ]*)@u' => '\zh{$1}',
+        '@\\\@u' => '\textbackslash ', // before adding \ for escapings
+        '@([%\$#&_{}])@u' => '\\\$1', // be careful of & through XML
+        '@~@u' => '\textasciitilde{}',
+        '@\^@u' => '\textasciicircum{}',
+        // '@(\p{Han}[\p{Han} ]*)@u' => '\zh{$1}',
         '@\s+@' => ' ', // not unicode \s, keep unbreakable space
     );
 
@@ -147,7 +146,12 @@ class Tei2latex  extends AbstractTei2
 
         // clone dom, clean text nodes
         $doc = $docOrig->cloneNode(true);
-        Xt::replaceText($doc, array_keys(self::LATEX_ESC), array_values(self::LATEX_ESC));
+        Xt::replaceText(
+            $doc, 
+            array_keys(self::LATEX_ESC), 
+            array_values(self::LATEX_ESC),
+            ['formula'] // formula may contain LaTeX
+        );
         Tei::imagesCopy($doc, $img_dir, $img_href);
         // for debug, copy of XML
         Filesys::mkdir($latex_dir);
@@ -158,8 +162,10 @@ class Tei2latex  extends AbstractTei2
             $doc,
             $pars,
         );
+        $xsl = Xpack::dir() . 'tei_latex/tei_latex.xsl';
+        if (isset($pars['latex.xsl'])) $xsl = $pars['latex.xsl'];
         $text = Xt::transformToXml(
-            Xpack::dir() . 'tei_latex/tei_latex.xsl',
+            $xsl,
             $doc,
             $pars,
         );
