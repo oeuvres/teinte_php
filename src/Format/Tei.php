@@ -37,8 +37,12 @@ class Tei extends File
             return false;
         }
         $this->loadXml($this->contents());
-        // set DocumentURI
+        // set DocumentURI for xi:include resolution
         $this->teiDoc->documentURI = "file:///" . str_replace('\\', '/', realpath($src_file));
+        // inclusions done, XML has change
+        if ($this->teiDoc->xinclude()) {
+            $this->tei = $this->teiDoc->saveXML();
+        }
         return true;
     }
 
