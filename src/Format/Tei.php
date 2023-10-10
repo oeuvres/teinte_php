@@ -46,6 +46,7 @@ class Tei extends File
         return true;
     }
 
+
     /**
      * Load XML/TEI as a string, normalize and load it as DOM
      */

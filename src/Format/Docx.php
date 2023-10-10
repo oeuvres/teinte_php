@@ -99,7 +99,7 @@ class Docx extends Zip
         $this->tei = '<?xml version="1.0" encoding="UTF-8"?>
 <pkg:package xmlns:pkg="http://schemas.microsoft.com/office/2006/xmlPackage">
 ';
-        // list of entries 
+        // list of entries from the docx to concat
         $entries = [
             // styles 
             'word/styles.xml' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml',
