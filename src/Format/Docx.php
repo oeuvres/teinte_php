@@ -299,8 +299,88 @@ class Docx extends Zip
         // return $dom;
     }
 
-
-
+    /**
+     * Get properies of document
+     */
+    public function properties()
+    {
+        $props = [ // =>null == !isset
+            'dcterms:created' => 0,
+            'dcterms:modified' => 0,
+            'TotalTime' => 0,
+            // app.xml seems poorly updated
+            // 'Pages' => 0,
+            // 'Paragraphs' => 0,
+            // 'Lines' => 0,
+            // 'Words' => 0,
+            // 'Characters' => 0,
+            // 'CharactersWithSpaces' => 0,
+        ];
+        $dom = new DOMDocument();
+        $dom->substituteEntities = true;
+        $entries = [
+            'docProps/app.xml',
+            'docProps/core.xml',
+        ];
+        foreach($entries as $entry) {
+            $content = $this->zip->getFromName($entry);
+            // some generators (ABBYY) do not provide stats
+            if ($content === false) {
+                // Log::debug("404 " . $entry);
+                continue;
+            }
+            $dom->loadXML($content);
+            $root = $dom->documentElement;
+            foreach( $root->childNodes as $node )
+            {
+                if ($node->nodeType !== 1) continue;
+                $name = $node->nodeName;
+                if (isset($props[$name])) {
+                    $props[$name] = $node->textContent;
+                }
+            }
+        }
+        // verify signs by looping on document
+        // dom loop is very very slow
+        // SAX is used instead
+        $counter = new class {
+            public $signs;
+            private $t = false;
+            public function start($parser, $name, $atts)
+            {
+                if($name == 'w:t') $this->t = true;
+            }
+            public function end($parser, $name)
+            {
+                if($name == 'w:t') $this->t = false;
+            }
+            public function text($parser, $data)
+            {
+                if (!$this->t) return;
+                $this->signs += mb_strlen($data);
+            }
+        };
+        $entries = [
+            'word/document.xml',
+            'word/footnotes.xml',
+        ];
+        foreach($entries as $entry) {
+            $content = $this->zip->getFromName($entry);
+            if ($content === false) {
+                continue;
+            }
+            // parser seems to be rebuild each time
+            $parser = xml_parser_create();
+            xml_parser_set_option($parser, XML_OPTION_CASE_FOLDING, false);
+            xml_set_character_data_handler($parser, array($counter, "text"));
+            xml_set_element_handler($parser, array($counter, "start"), array($counter, "end"));
+            xml_parse($parser, $content, true);
+            unset($content);
+            xml_parser_free($parser);
+        }
+        $props['signs'] = $counter->signs;
+        return $props;
+    }
 }
 
 Docx::init();
