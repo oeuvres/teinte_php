@@ -29,19 +29,19 @@ class Tei extends File
     /**
      * Load XML/TEI as a file (preferred way to hav some metas).
      */
-    public function load(string $src_file): bool
+    public function open(string $src_file): bool
     {
         $this->teiReset();
-        // parent load() has return false, probably an error 
-        if (!parent::{__FUNCTION__}(...func_get_args())) {
+        if (!parent::open($src_file)) {
+            // parent has return false, probably an error 
             return false;
         }
-        $this->loadXml($this->contents());
+        $this->loadXML($this->contents());
         // set DocumentURI for xi:include resolution
-        $this->teiDoc->documentURI = "file:///" . str_replace('\\', '/', realpath($src_file));
+        $this->teiDOM->documentURI = "file:///" . str_replace('\\', '/', realpath($src_file));
         // inclusions done, XML has change
-        if ($this->teiDoc->xinclude()) {
-            $this->tei = $this->teiDoc->saveXML();
+        if ($this->teiDOM->xinclude()) {
+            $this->teiXML = $this->teiDOM->saveXML();
         }
         return true;
     }
@@ -50,22 +50,22 @@ class Tei extends File
     /**
      * Load XML/TEI as a string, normalize and load it as DOM
      */
-    public function loadXml(string $xml):DOMDocument
+    public function loadXML(string $xml):DOMDocument
     {
         $this->teiReset();
         $tei = static::lint($xml);
-        $this->tei = $tei;
+        $this->teiXML = $tei;
         // spaces are normalized upper, keep them
         // set dom properties before loading
         $dom = new DOMDocument();
         $dom->substituteEntities = true;
         $dom->preserveWhiteSpace = true;
         $dom->formatOutput = false;
-        $this->teiDoc = Xt::loadXml($tei, $dom);
-        if (!$this->teiDoc) {
+        $this->teiDOM = Xt::loadXML($tei, $dom);
+        if (!$this->teiDOM) {
             throw new Exception("XML malformation");
         }
-        return $this->teiDoc;
+        return $this->teiDOM;
     }
 
     /**
@@ -74,7 +74,7 @@ class Tei extends File
     public function loadDoc(DOMDocument $dom)
     {
         $this->teiReset();
-        $this->teiDoc = $dom;
+        $this->teiDOM = $dom;
     }
 
     /**
@@ -83,11 +83,11 @@ class Tei extends File
     public function teiMake(?array $pars = null): void
     {
         if (
-            $this->teiXml == null 
-            && $this->teiDoc == null 
-            && !$this->teiDoc->documentElement
+            $this->teiXML == null 
+            || $this->teiDOM == null 
+            || !$this->teiDOM->documentElement
         ) {
-            throw new Exception("No XML/TEI loaded, use Tei::loadXml() or Tei::loadDoc()");
+            throw new Exception("No XML/TEI loaded, use Tei::() or Tei::loadDoc()");
             
         }
 
@@ -125,12 +125,12 @@ class Tei extends File
         }
         if ($format == 'tei') {
             // TODO : copy linked images 
-            file_put_contents($uri, $this->tei());
+            file_put_contents($uri, $this->teiXML());
             return;
         } 
         $transfo = AbstractTei2::transfo($format);
         $pars = $this->pars($format, $pars);
-        $transfo::toUri($this->teiDoc, $uri, $pars);
+        $transfo::toUri($this->teiDOM, $uri, $pars);
     }
 
     /**
@@ -141,7 +141,7 @@ class Tei extends File
     {
         $transfo = AbstractTei2::transfo($format);
         $pars = $this->pars($format, $pars);
-        return $transfo::toXml($this->teiDoc, $pars);
+        return $transfo::toXml($this->teiDOM, $pars);
     }
 
     /**
@@ -152,7 +152,7 @@ class Tei extends File
     {
         $transfo = AbstractTei2::transfo($format);
         $pars = $this->pars($format, $pars);
-        return $transfo::toDoc($this->teiDoc, $pars);
+        return $transfo::toDoc($this->teiDOM, $pars);
     }
 
     /**
@@ -221,7 +221,7 @@ class Tei extends File
      */
     public function meta()
     {
-        $meta = self::metaDom($this->teiDoc, $this->xpath());
+        $meta = self::dc($this->teiDOM);
         $meta['code'] = pathinfo($this->file, PATHINFO_FILENAME);
         $meta['filename'] = $this->filename();
         $meta['filemtime'] = $this->filemtime();
@@ -230,11 +230,11 @@ class Tei extends File
     }
 
     /**
-     * Return an array of metadata from a dom document
+     * Return an array of metadata from a TEI DOM document
      */
-    public static function metaDom($dom, $xpath = null)
+    public static function dc($DOM)
     {
-        if ($xpath == null) $xpath = new DOMXpath($dom);
+        $xpath = new DOMXpath($DOM);
         $xpath->registerNamespace('tei', "http://www.tei-c.org/ns/1.0");
 
         $meta = array();
@@ -302,8 +302,6 @@ class Tei extends File
         }
         if (!$meta['issued'] && isset($value) && is_numeric($value)) $meta['issued'] = $value;
         $meta['source'] = null;
-
-
         return $meta;
     }
 

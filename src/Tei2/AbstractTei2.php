@@ -108,17 +108,17 @@ abstract class AbstractTei2
     /**
      * Write transformation as an Uri, which is mainly, a file
      */
-    static abstract public function toUri(DOMDocument $dom, string $dstFile, ?array $pars = null);
+    static abstract public function toURI(DOMDocument $dom, string $dstFile, ?array $pars = null);
     /**
      * Export transformation as an XML string
      * (maybe not relevant for aggregated formats: docx, epub, site…)
      */
-    static abstract public function toXml(DOMDocument $dom, ?array $pars = null): ?string;
+    static abstract public function toXML(DOMDocument $DOM, ?array $pars = null): ?string;
     /**
      * Export transformation as a Dom
      * (maybe not relevant for aggregated formats: docx, epub, site…)
      */
-    static abstract public function toDoc(DOMDocument $dom, ?array $pars = null): ?DOMDocument;
+    static abstract public function toDOM(DOMDocument $DOM, ?array $pars = null): ?DOMDocument;
 }
 AbstractTei2::init();
 

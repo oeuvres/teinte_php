@@ -125,7 +125,7 @@ class Tei2latex  extends AbstractTei2
     /**
      * @ override
      */
-    static public function toUri(
+    static public function toURI(
         DOMDocument $docOrig, 
         string $latex_file, 
         ?array $pars = null
@@ -180,7 +180,7 @@ class Tei2latex  extends AbstractTei2
     /**
      * @ override
      */
-    static function toDoc(DOMDocument $dom, ?array $pars=null):?\DOMDocument
+    static function toDOM(DOMDocument $dom, ?array $pars=null):?\DOMDocument
     {
         Log::error(__METHOD__." dom export not relevant");
         return null;
@@ -188,7 +188,7 @@ class Tei2latex  extends AbstractTei2
     /**
      * @ override
      */
-    static function toXml(DOMDocument $dom, ?array $pars=null):?string
+    static function toXML(DOMDocument $dom, ?array $pars=null):?string
     {
         Log::error(__METHOD__." xml export not relevant");
         return null;

@@ -44,21 +44,29 @@ class File
     /**
      * Load a file lazily, return nothing, used by child classes.
      */
-    public function load(string $file): bool
+    public function open(string $file): bool
     {
         $this->contents = null;
         $this->file = $file;
         if (!Filesys::readable($file)) {
             // Filesys logging
-            $this->filename = null;
-            $this->filemtime = null;
-            $this->filesize = null;
+            $this->reset();
             return false;
         }
         $this->filename = pathinfo($file, PATHINFO_FILENAME);
         $this->filemtime = filemtime($file);
         $this->filesize = filesize($file); // ?? if URL ?
         return true;
+    }
+
+    /**
+     * Reset properties
+     */
+    public function reset():void
+    {
+        $this->filename = null;
+        $this->filemtime = null;
+        $this->filesize = null;
     }
 
     /**

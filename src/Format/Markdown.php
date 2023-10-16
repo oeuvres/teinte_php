@@ -111,10 +111,10 @@ class Markdown extends File
     public function teiMake(?array $pars = null):void
     {
         // ensure html making
-        $htmlDoc = $this->htmlDoc();
-        $this->teiDoc = Xt::transformToDoc(
+        $htmlDOM = $this->htmlDOM();
+        $this->teiDOM = Xt::transformToDoc(
             Xpack::dir() . 'html_tei/html_tei.xsl', 
-            $htmlDoc
+            $htmlDOM
         );
     }
 

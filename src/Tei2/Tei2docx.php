@@ -41,8 +41,8 @@ class Tei2docx extends AbstractTei2
      */
     static private function template(?array $pars=null):string
     {
-        if ($pars && isset($pars['template'])) {
-            return $pars['template'];
+        if ($pars && isset($pars['template.docx'])) {
+            return $pars['template.docx'];
         }
         return Xpack::dir() . '/tei_docx/template.docx';
     }
@@ -50,7 +50,7 @@ class Tei2docx extends AbstractTei2
     /**
      * @ override
      */
-    static function toDoc(DOMDocument $dom, ?array $pars=null):?\DOMDocument
+    static function toDOM(DOMDocument $dom, ?array $pars=null):?\DOMDocument
     {
         Log::error(__METHOD__." dom export not relevant");
         return null;
@@ -58,7 +58,7 @@ class Tei2docx extends AbstractTei2
     /**
      * @ override
      */
-    static function toXml(DOMDocument $dom, ?array $pars=null):?string
+    static function toXML(DOMDocument $dom, ?array $pars=null):?string
     {
         Log::error(__METHOD__." xml export not relevant");
         return null;
@@ -67,7 +67,7 @@ class Tei2docx extends AbstractTei2
     /**
      * @ override
      */
-    static function toUri($dom, $dst_file, ?array $pars=null)
+    static function toURI($dom, $dst_file, ?array $pars=null)
     {
         Log::debug("Tei2" . static::NAME ." $dst_file");
         $template = self::template($pars);

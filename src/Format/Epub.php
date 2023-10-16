@@ -39,6 +39,8 @@ class Epub extends Zip
     private ?DOMXpath $opf_xpath;
     /** manifest of resources, map id => path */
     private $manifest = [];
+    /** spine, map name => path */
+    private $spine = [];
     /** A css model with semantic properties */
     private CssModel $style;
     /** A private dom of the html */
@@ -93,21 +95,30 @@ class Epub extends Zip
     /**
      * Load and check
      */
-    public function load(string $file): bool
+    public function open(string $file): bool
     {
         $this->teiReset();
         $this->htmlReset();
-        if (!parent::load($file)) {
+        if (!parent::open($file)) {
             return false;
         }
         $this->style = new CssModel();
-        $this->chops = 0;
+        // $this->chops = 0; // what was it ?
+        
+        return true;
+    }
+
+    /**
+     * Get opf dom
+     */
+    public function opf_dom()
+    {
         if (null === ($cont = $this->get('META-INF/container.xml'))) {
-            Log::warning(I18n::_('Epub.container404', $file));
+            Log::warning(I18n::_('Epub.container404', $this->file));
             return false;
         }
         // seen, container.xml in UTF-16
-        $dom = Xt::loadXml($cont);
+        $dom = Xt::loadXML($cont);
         $opf_path = null;
         foreach ($dom->getElementsByTagNameNS(
             'urn:oasis:names:tc:opendocument:xmlns:container', 
@@ -117,42 +128,28 @@ class Epub extends Zip
             $opf_path = $el->getAttribute('full-path');
         }
         if (!$opf_path) {
-            Log::warning(I18n::_('Epub.opf400', $file));
+            Log::warning(I18n::_('Epub.opf400', $this->file));
             return false;
         }
 
         $this->opf_path = urldecode($opf_path);
         if (null === ($this->opf_xml = $this->get($this->opf_path))) {
-            Log::warning(I18n::_('Epub.opf0', $file));
+            Log::warning(I18n::_('Epub.opf0', $this->file));
             return false;
         }
         // set dir for path resolution in opf
         $this->opf_dir = dirname($this->opf_path);
         if ($this->opf_dir == ".") $this->opf_dir = "";
         else $this->opf_dir .= "/"; // ensure ending slash
-        $this->opf_dom = Xt::loadXml($this->opf_xml);
-        // validate minimum required elements
-        $ok = true;
-        foreach (['metadata', 'manifest', 'spine'] as $el) {
-            $nl = $this->opf_dom->getElementsByTagName('manifest');
-            if (!$nl) {
-                Log::warning(I18n::_('Epub.opfel404', $this->file, $this->opf_pat, $el));
-                $ok = false;
-            }
-        }
-        // decode all uris in opf
-        if (!$ok) return false;
+        $this->opf_dom = Xt::loadXML($this->opf_xml);
+        // decode all %## in uris of opf
         $this->opf_xpath = new DOMXpath($this->opf_dom);
         $this->opf_xpath->registerNamespace("opf", "http://www.idpf.org/2007/opf");
         $nl = $this->opf_xpath->query("//@href");
         foreach ($nl as $node) {
             $node->value = urldecode($node->value);
         }
-        // read resources
-        $this->manifest();
-        $this->spine();
-        
-        return true;
+        return $this->opf_dom;
     }
 
     /**
@@ -160,10 +157,19 @@ class Epub extends Zip
      */
     public function htmlMake(?array $pars = null): void
     {
-        if (!isset($this->opf_dom)) {
-            Log::error(I18n::_('Epub.load'));
-            throw new Exception(I18n::_('Epub.load'));
+        // validate minimum required elements
+        $ok = true;
+        $this->opf_dom();
+        foreach (['metadata', 'manifest', 'spine'] as $el) {
+            $nl = $this->opf_dom->getElementsByTagName($el);
+            if (!$nl) {
+                Log::warning(I18n::_('Epub.opfel404', $this->file, $this->opf_path, $el));
+                $ok = false;
+            }
         }
+        // are those files needed ?
+        $this->manifest();
+        $this->spine();
         $sections = $this->sections();
         $sections = preg_replace($this->preg[0], $this->preg[1], $sections);
         $css = "";
@@ -183,9 +189,9 @@ class Epub extends Zip
 ";
         // a no indent dom, work is done upper
         $dom = self::dom();
-        Xt::loadXml($xhtml, $dom);
+        Xt::loadXML($xhtml, $dom);
         // indent yes or indent no (la la la)
-        $this->htmlDoc = Xt::transformToDoc(
+        $this->htmlDOM = Xt::transformToDOM(
             Xpack::dir() . 'html_tei/epub_teinte_html.xsl', 
             $dom
         );
@@ -196,7 +202,7 @@ class Epub extends Zip
      */
     private function sections(): ?string
     {
-        // concat toc + spine
+        // TODO, concat toc + spine
         $xml = "<pack>\n";
         $toc = $this->ncx_xml();
         if (!$toc) $toc = '';
@@ -211,7 +217,7 @@ class Epub extends Zip
         $xml .= preg_replace("/^.*?(<\p{L}+)/su", '$1', $toc);
         $xml .= preg_replace("/^.*?(<\p{L}+)/su", '$1', $this->opf_xml);
         $xml .= "</pack>\n";
-        $dom = Xt::loadXml($xml);
+        $dom = Xt::loadXML($xml);
         // get an html from the toc with includes
         $sections = Xt::transformToXml(
             Xpack::dir().'html_tei/ncx_html.xsl', 
@@ -251,7 +257,7 @@ class Epub extends Zip
     public function teiMake(?array $pars = null): void
     {
         // ensure xhtml generation
-        $this->htmlDoc();
+        $this->htmlDOM();
 
         // to produce a <teiHeader>, make a new doc to transform with opf
         $metadata = $this->opf_dom->getElementsByTagName('metadata')->item(0);
@@ -264,14 +270,14 @@ class Epub extends Zip
             $metaDoc
         );
         // toDom for indent-
-        $this->teiDoc = Xt::transformToDoc(
+        $this->teiDOM = Xt::transformToDoc(
             Xpack::dir() . 'html_tei/html_tei.xsl', 
-            $this->htmlDoc
+            $this->htmlDOM
         );
-        $teiHeader = $this->teiDoc->importNode($teiHeader->documentElement, true);
-        $text = Xt::firstElementChild($this->teiDoc->documentElement);
-        $this->teiDoc->documentElement->insertBefore($teiHeader, $text);
-        $this->teiDoc->formatOutput = true;
+        $teiHeader = $this->teiDOM->importNode($teiHeader->documentElement, true);
+        $text = Xt::firstElementChild($this->teiDOM->documentElement);
+        $this->teiDOM->documentElement->insertBefore($teiHeader, $text);
+        $this->teiDOM->formatOutput = true;
     }
 
     /**

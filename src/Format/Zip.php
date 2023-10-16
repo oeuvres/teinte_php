@@ -18,7 +18,7 @@ Check::extension('zip');
 
 
 /**
- * A Teidoc exporter.
+ * A teiDOM exporter.
  */
 class Zip extends File
 {
@@ -28,9 +28,9 @@ class Zip extends File
     /**
      * Open zip archive with tests
      */
-    public function load(string $file): bool
+    public function open(string $file): bool
     {
-        if (!parent::load($file)) {
+        if (!parent::open($file)) {
             return false;
         }
         $this->zip = new ZipArchive();

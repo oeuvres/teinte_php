@@ -47,10 +47,10 @@ class Docx extends Zip
     /**
      * Load and check
      */
-    public function load(string $file): bool
+    public function open(string $file): bool
     {
         $this->teiReset();
-        if (!parent::load($file)) {
+        if (!parent::open($file)) {
             return false;
         }
         return true;
@@ -64,16 +64,16 @@ class Docx extends Zip
 
     
     /**
-     * Give a dom with right options
+     * Give a DOM with right options
      */
-    private function newDom(): DOMDocument
+    private function newDOM(): DOMDocument
     {
-        // keep a special dom options
-        $dom = new DOMDocument();
-        $dom->substituteEntities = true;
-        $dom->preserveWhiteSpace = true;
-        $dom->formatOutput = false;
-        return $dom;
+        // keep a special DOM options
+        $DOM = new DOMDocument();
+        $DOM->substituteEntities = true;
+        $DOM->preserveWhiteSpace = true;
+        $DOM->formatOutput = false;
+        return $DOM;
     }
 
 
@@ -96,7 +96,7 @@ class Docx extends Zip
     {
         // should have been loaded here
         // concat XML files sxtracted, without XML prolog
-        $this->tei = '<?xml version="1.0" encoding="UTF-8"?>
+        $this->teiXML = '<?xml version="1.0" encoding="UTF-8"?>
 <pkg:package xmlns:pkg="http://schemas.microsoft.com/office/2006/xmlPackage">
 ';
         // list of entries from the docx to concat
@@ -140,7 +140,7 @@ class Docx extends Zip
                 ],
                 $content
             );
-            $this->tei .= "
+            $this->teiXML .= "
   <pkg:part pkg:contentType=\"$type\" pkg:name=\"/$name\">
     <pkg:xmlData>\n" . $content . "\n    </pkg:xmlData>
   </pkg:part>
@@ -149,12 +149,12 @@ class Docx extends Zip
         // add custom style table here for tag mapping
         $content = file_get_contents(Xpack::dir() . 'docx/styles.xml');
         $content = preg_replace('/^.*<sheet/ms', '<sheet', $content);
-        $this->tei .= "
+        $this->teiXML .= "
         <pkg:part pkg:contentType=\"$type\" pkg:name=\"/teinte/styles.xml\">
           <pkg:xmlData>\n" . $content . "\n    </pkg:xmlData>
         </pkg:part>
       ";
-        $this->tei .= "\n</pkg:package>\n";
+        $this->teiXML .= "\n</pkg:package>\n";
     }
 
     /**
@@ -163,19 +163,19 @@ class Docx extends Zip
      */
     function teilike(?array $pars = null):void
     {
-        // a local dom with right properties
-        $dom = $this->newDom();
+        // a local DOM with right properties
+        $DOM = $this->newDOM();
         // DO NOT indent here
-        Xt::loadXml($this->tei, $dom);
-        $dom = Xt::transformToDoc(
+        Xt::loadXML($this->teiXML, $DOM);
+        $DOM = Xt::transformToDOM(
             Xpack::dir() . 'docx/docx_teilike.xsl', 
-            $dom,
+            $DOM,
             $pars
         );
         // out that as xml for pcre
-        $this->tei = Xt::transformToXml(
+        $this->teiXML = Xt::transformToXML(
             Xpack::dir() . 'docx/divs.xsl', 
-            $dom,
+            $DOM,
         );
     }
 
@@ -185,10 +185,10 @@ class Docx extends Zip
     function pcre(): void
     {
         // clean xml oddities
-        $this->tei = preg_replace(self::$preg[0], self::$preg[1], $this->tei);
+        $this->teiXML = preg_replace(self::$preg[0], self::$preg[1], $this->teiXML);
         // custom patterns
         if (isset($this->user_preg)) {
-            $this->tei = preg_replace($this->user_preg[0], $this->user_preg[1], $this->tei);
+            $this->teiXML = preg_replace($this->user_preg[0], $this->user_preg[1], $this->teiXML);
         }
     }
 
@@ -197,23 +197,23 @@ class Docx extends Zip
      */
     function tmpl(?array $pars = null): void
     {
-        // a local dom with right properties
-        $dom = $this->newDom();
+        // a local DOM with right properties
+        $DOM = $this->newDOM();
         // xml should come from pcre transform
-        Xt::loadXml($this->tei, $dom);
+        Xt::loadXML($this->teiXML, $DOM);
         if (!isset($pars["template" ])) {
             $pars["template" ] = $this->tmpl;
         }
         // TEI regularisations and model fusion
-        $dom = Xt::transformToDoc(
+        $DOM = Xt::transformToDOM(
             Xpack::dir() . 'docx/tei_tmpl.xsl',
-            $dom,
+            $DOM,
             $pars
         );
         // delete old xml
-        $this->tei = null;
-        // set new dom
-        $this->teiDoc = $dom;
+        $this->teiXML = null;
+        // set new DOM
+        $this->teiDOM = $DOM;
     }
 
     /**
@@ -255,9 +255,9 @@ class Docx extends Zip
      */
     public function images($dst_tei, $href_prefix)
     {
-        $dom = $this->teiDoc;
+        $DOM = $this->teiDOM;
         $count = 1;
-        $nl = $dom->getElementsByTagNameNS('http://www.tei-c.org/ns/1.0', 'graphic');
+        $nl = $DOM->getElementsByTagNameNS('http://www.tei-c.org/ns/1.0', 'graphic');
         // $pad = strlen('' . $nl->count());
         foreach ($nl as $el) {
             $att = $el->getAttributeNode("url");
@@ -296,7 +296,7 @@ class Docx extends Zip
       $this->img($el->getAttributeNode("facs"), $hrefTei, $dstdir, $hrefSqlite);
     }
     */
-        // return $dom;
+        // return $DOM;
     }
 
     /**
@@ -316,8 +316,8 @@ class Docx extends Zip
             // 'Characters' => 0,
             // 'CharactersWithSpaces' => 0,
         ];
-        $dom = new DOMDocument();
-        $dom->substituteEntities = true;
+        $DOM = new DOMDocument();
+        $DOM->substituteEntities = true;
         $entries = [
             'docProps/app.xml',
             'docProps/core.xml',
@@ -329,8 +329,8 @@ class Docx extends Zip
                 // Log::debug("404 " . $entry);
                 continue;
             }
-            $dom->loadXML($content);
-            $root = $dom->documentElement;
+            $DOM->loadXML($content);
+            $root = $DOM->documentElement;
             foreach( $root->childNodes as $node )
             {
                 if ($node->nodeType !== 1) continue;
@@ -341,7 +341,7 @@ class Docx extends Zip
             }
         }
         // verify signs by looping on document
-        // dom loop is very very slow
+        // DOM loop is very very slow
         // SAX is used instead
         $counter = new class {
             public $signs;
