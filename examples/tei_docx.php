@@ -4,7 +4,9 @@ include_once(dirname(__DIR__) . '/vendor/autoload.php');
 
 use Oeuvres\Teinte\{Tei2docx, TeiExporter};
 use Psr\Log\LogLevel;
-use Oeuvres\Kit\{Filesys, Log, LoggerCli};
+use Oeuvres\Kit\{Filesys, Log};
+use Oeuvres\Kit\Logger\{LoggerCli};
+
 use Oeuvres\Teinte\Format\{Tei};
 
 Log::setLogger(new LoggerCli(LogLevel::DEBUG));
@@ -98,8 +100,8 @@ class Tei_docx {
     static function export($src_file, $dst_file)
     {
         Log::info($src_file . " > " . $dst_file);
-        self::$tei->load($src_file);
-        self::$tei->toUri('docx', $dst_file);
+        self::$tei->open($src_file);
+        self::$tei->toURI('docx', $dst_file);
     }
         
 }

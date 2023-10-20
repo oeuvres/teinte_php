@@ -53,6 +53,15 @@ class Zip extends File
     }
 
     /**
+     * Close zip archive
+     */
+    public function close()
+    {
+        return $this->zip->close();
+    }
+
+
+    /**
      * Return zip object
      */
     public function zip():?ZipArchive
@@ -62,7 +71,6 @@ class Zip extends File
 
     /**
      * Try to get entry, log nicely if error,
-     * 
      */
     public function get(string $name):?string
     {
@@ -74,6 +82,24 @@ class Zip extends File
         // check if entry is empty ?
         return $this->zip->getFromName($name);
 
+    }
+
+    /**
+     * Put content (normalize path), return previous content if available,
+     * or "" if no content, or null on error
+     */
+    public function put(string $name, string $content):?string
+    {
+        $name = Filesys::pathnorm($name);
+        $ret = "";
+        if (true === $this->zip->statName($name)) {
+            $ret = $this->zip->getFromName($name);
+        }
+        if (!$this->zip->addFromString($name, $content)) {
+            Log::error(I18n::_('Zip.writefail', $this->file, $name, $this->zip->getStatusString()));
+            return null;
+        }
+        return $ret;
     }
 
     /**

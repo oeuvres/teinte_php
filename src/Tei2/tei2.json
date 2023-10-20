@@ -11,6 +11,9 @@
     "docx": {
         "label": "Microsoft.Word 2007 format"
     },
+    "epub": {
+        "label": "Open electronic book"
+    },
     "html": {
         "label": "<html> full document"
     },

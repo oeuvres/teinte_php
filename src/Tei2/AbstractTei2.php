@@ -24,6 +24,7 @@ abstract class AbstractTei2
     /** Parameters for all (?) transformers */
     static protected array $pars = [];
     /** Prefered extension for exported files */
+    // const EXT = self::EXT; //  Would force child class to implement, but init()
     const EXT = null;
     /** Name of the transo for logging */
     const NAME = null;
@@ -83,13 +84,13 @@ abstract class AbstractTei2
         ?string $dst_dir = null
     ): string {
         if (!$dst_dir) {
-            $dstDir = dirname($src_file) . DIRECTORY_SEPARATOR;
+            $dst_dir = dirname($src_file) . DIRECTORY_SEPARATOR;
         } else {
-            $dstDir = Filesys::normdir($dst_dir);
+            $dst_dir = Filesys::normdir($dst_dir);
         }
-        $dstName =  pathinfo($src_file, PATHINFO_FILENAME);
-        $dstFile = $dstDir . $dstName . static::EXT;
-        return $dstFile;
+        $dst_name =  pathinfo($src_file, PATHINFO_FILENAME);
+        $dst_file = $dst_dir . $dst_name . static::EXT;
+        return $dst_file;
     }
 
     /**

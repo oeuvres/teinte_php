@@ -18,10 +18,14 @@ use Oeuvres\Teinte\Format\{Epub};
 /**
  * Export a TEI document as an html fragment <article>
  */
-class Tei2split extends AbstractTei2
+class Tei2epub extends AbstractTei2
 {
     const NAME = "epub";
     const EXT = '.epub';
+    /** a pool of generated objects, used by static xsl function */
+    static private $pool = [];
+    /** counter in pool */
+    static private $poolkey = 1;
 
     /**
      * Return a configured template or default
@@ -37,11 +41,12 @@ class Tei2split extends AbstractTei2
     /**
      * @ override
      */
-    static public function toURI(DOMDocument $dom, string $dst_file, ?array $pars=[])
+    static public function toURI(DOMDocument $teiDOM, string $dst_file, ?array $pars=[])
     {
         Log::debug("Tei2" . static::NAME ." $dst_file");
         // copy the epub template as dst file
         $template = self::template($pars);
+
         if (!Filesys::readable($template)) {
             throw new Exception("“{$template}” not readble as a template file");
         }
@@ -49,8 +54,32 @@ class Tei2split extends AbstractTei2
             throw new Exception("“{$dst_file}” not writable.\n" . Log::last());
         }
         $epub = new Epub();
+        $epubId = self::$poolkey++;
+        self::$pool[$epubId] = $epub;
         $epub->open($dst_file);
         // content.opf, extract from template, insert in TEI dom to merge for a new content.opf, put in the epub zip
+        $opfDOM = $epub->opfDOM();
+        $opfPath = $opfDOM->documentURI;
+        $opfRoot = $opfDOM->documentElement;
+        $opfRoot = $teiDOM->importNode($opfRoot, true);
+        $teiDOM->documentElement->appendChild($opfRoot);
+        $opfXML = Xt::transformToXML(
+            Xpack::dir().'tei_epub/tei_opf.xsl',
+            $teiDOM,
+            [],
+        );
+        $epub->put($opfPath, $opfXML);
+        // create xhtml pages (opf used to get css links)
+        $report = Xt::transformToXML(
+            Xpack::dir().'tei_epub/tei_epub.xsl',
+            $teiDOM,
+            [
+                'epubId' => (int) $epubId,
+            ]
+        );
+
+        $teiDOM->documentElement->removeChild($opfRoot);
+        unset(self::$pool[$epubId]);
 
         // toc.ncx, generate from TEI dom, put in the epub zip
         // pages, generate from TEI dom, insert in zip
@@ -68,6 +97,13 @@ class Tei2split extends AbstractTei2
             $pars,
         );
         */
+    }
+
+    static public function item($epubId, $name, $html)
+    {
+        $html = Xt::nodesetXML($html);
+        self::$pool[$epubId]->put('OEBPS/' . $name, $html);
+        // echo $epubId . " — " . $name . "\n";
     }
 
     /**
