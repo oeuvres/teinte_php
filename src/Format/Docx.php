@@ -308,6 +308,7 @@ class Docx extends Zip
             'dcterms:created' => 0,
             'dcterms:modified' => 0,
             'TotalTime' => 0,
+            'media' => 0,
             // app.xml seems poorly updated
             // 'Pages' => 0,
             // 'Paragraphs' => 0,
@@ -379,6 +380,15 @@ class Docx extends Zip
             xml_parser_free($parser);
         }
         $props['signs'] = $counter->signs;
+
+        // count media files
+        for ($i = 0; $i < $this->zip->numFiles; $i++) {
+            $stat = $this->zip->statIndex($i);
+            $name = $stat['name'];
+            if (strpos($name, 'word/media/') !== 0) continue;
+            $props['media']++;
+        }
+
         return $props;
     }
 }

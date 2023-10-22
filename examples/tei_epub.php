@@ -33,6 +33,7 @@ class Tei_epub extends Cliglob {
                 echo $t." ".$ext;
                 if ($ext != 'epub') continue;
                 $template = $t;
+                break;
             }
         }
         self::$tei->toURI(
