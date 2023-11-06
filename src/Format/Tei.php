@@ -71,7 +71,7 @@ class Tei extends File
     /**
      * Load a dom directly, 
      */
-    public function loadDoc(DOMDocument $dom)
+    public function loadDOM(DOMDocument $dom)
     {
         $this->teiReset();
         $this->teiDOM = $dom;
@@ -118,7 +118,7 @@ class Tei extends File
     /**
      * Transform current dom and write to file.
      */
-    public function toUri(string $format, String $uri, ?array $pars = null)
+    public function toURI(string $format, String $uri, ?array $pars = null)
     {
         if (!Filesys::writable($uri)) {
             throw new Exception("“{$uri}” not writable as a destination file");
@@ -137,7 +137,7 @@ class Tei extends File
      * Transform current dom and returns XML
      * (when relevant)
      */
-    public function toXml(string $format, ?array $pars = null): string
+    public function toXML(string $format, ?array $pars = null): string
     {
         $transfo = AbstractTei2::transfo($format);
         $pars = $this->pars($format, $pars);
@@ -148,7 +148,7 @@ class Tei extends File
      * Transform current and returns result as dom
      * (when relevant)
      */
-    public function toDoc(string $format, ?array $pars = null): DOMDocument
+    public function toDOM(string $format, ?array $pars = null): DOMDocument
     {
         $transfo = AbstractTei2::transfo($format);
         $pars = $this->pars($format, $pars);

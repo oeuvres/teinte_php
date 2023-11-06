@@ -78,6 +78,8 @@ class Tei2epub extends AbstractTei2
             ]
         );
 
+        // ? 
+        // reset
         $teiDOM->documentElement->removeChild($opfRoot);
         unset(self::$pool[$epubId]);
 
