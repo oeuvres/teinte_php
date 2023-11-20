@@ -37,6 +37,19 @@ trait Teiable
     }
 
     /**
+     * Write to file xml state (maybe transformed and diverges from original)
+     */
+    function teiURI(string $dstFile): void
+    {
+        if ($this->teiXML === null) {
+            $this->teiDOM();
+            $this->teiXML = $this->teiDOM->saveXML();
+        }
+        file_put_contents($dstFile, $this->teiXML);
+    }
+
+
+    /**
      * Return dom state (maybe transformed and diverges from original)
      */
     function teiDOM(): DOMDocument
