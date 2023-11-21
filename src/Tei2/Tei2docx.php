@@ -139,7 +139,7 @@ class Tei2docx extends AbstractTei2
         );
         $zip->addFromString('word/document.xml', $xml);
 
-        // keep some relations in footnotes from temèplate
+        // keep some relations in footnotes from template
         file_put_contents(
             $templPath, 
             $zip->getFromName('word/_rels/document.xml.rels')

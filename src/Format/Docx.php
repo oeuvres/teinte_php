@@ -146,14 +146,31 @@ class Docx extends Zip
   </pkg:part>
 ";
         }
-        // add custom style table here for tag mapping
-        $content = file_get_contents(Xpack::dir() . 'docx/styles.xml');
-        $content = preg_replace('/^.*<sheet/ms', '<sheet', $content);
-        $this->teiXML .= "
-        <pkg:part pkg:contentType=\"$type\" pkg:name=\"/teinte/styles.xml\">
-          <pkg:xmlData>\n" . $content . "\n    </pkg:xmlData>
-        </pkg:part>
-      ";
+        // add file contents
+        foreach ([
+            'docx/styles.xml' => 'application/teinte.styles',
+            'docx/symbol.xml' => 'application/teinte.charmap',
+
+        ] as $name => $type) {
+            $content = file_get_contents(Xpack::dir() . $name);
+            $content = preg_replace(
+                [
+                    '@<\?xml.*?\?>@s',
+                    '@<!DOCTYPE.*?\] *>@s',
+                ],
+                [
+                    '',
+                    '',
+                ],
+                $content
+            );
+            
+            $this->teiXML .= "
+            <pkg:part pkg:contentType=\"$type\" pkg:name=\"$name\">
+              <pkg:xmlData>\n" . $content . "\n    </pkg:xmlData>
+            </pkg:part>
+          ";
+        }
         $this->teiXML .= "\n</pkg:package>\n";
     }
 
