@@ -47,7 +47,7 @@ class Docx extends Zip
     /**
      * Load and check
      */
-    public function open(string $file): bool
+    public function open(string $file, ?int $flags = 0): bool
     {
         $this->teiReset();
         if (!parent::open($file)) {
@@ -152,22 +152,12 @@ class Docx extends Zip
             'docx/symbol.xml' => 'application/teinte.charmap',
 
         ] as $name => $type) {
-            $content = file_get_contents(Xpack::dir() . $name);
-            $content = preg_replace(
-                [
-                    '@<\?xml.*?\?>@s',
-                    '@<!DOCTYPE.*?\] *>@s',
-                ],
-                [
-                    '',
-                    '',
-                ],
-                $content
-            );
-            
+            // clean prolog
+            $dom = new DOMDocument();
+            $dom->load(Xpack::dir() . $name);
             $this->teiXML .= "
             <pkg:part pkg:contentType=\"$type\" pkg:name=\"$name\">
-              <pkg:xmlData>\n" . $content . "\n    </pkg:xmlData>
+              <pkg:xmlData>\n" . $dom->saveXML($dom->documentElement) . "\n    </pkg:xmlData>
             </pkg:part>
           ";
         }
