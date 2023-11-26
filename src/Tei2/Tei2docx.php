@@ -85,6 +85,8 @@ class Tei2docx extends AbstractTei2
             $data = Filesys::loadURL($att->value, $dom_dir);
             if (!$data) {
                 // something went wrong and should have been logged
+                // remove attribute
+                $el->removeAttribute("url");
                 continue;
             }
             $image_path = "media/image_" 
@@ -171,6 +173,7 @@ class Tei2docx extends AbstractTei2
     <Default Extension="png" ContentType="image/png"/>
     <Default Extension="jpeg" ContentType="image/jpeg"/>
     <Default Extension="jpg" ContentType="image/jpeg"/>
+    <Default Extension="tif" ContentType="image/tif"/>
     <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
     <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
     <Override PartName="/word/_rels/document.xml.rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
@@ -186,6 +189,28 @@ class Tei2docx extends AbstractTei2
 </Types>
         ';
         $zip->put('[Content_Types].xml', $xml);
+        $xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+    <w:zoom w:percent="100"/>
+    <w:defaultTabStop w:val="708"/>
+    <w:autoHyphenation w:val="true"/>
+    <w:footnotePr>
+    <w:numFmt w:val="decimal"/>
+        <w:footnote w:id="0"/>
+        <w:footnote w:id="1"/>
+    </w:footnotePr>
+    <w:compat>
+        <w:doNotExpandShiftReturn/>
+        <w:compatSetting w:name="compatibilityMode" w:uri="http://schemas.microsoft.com/office/word" w:val="12"/>
+        <w:compatSetting w:name="overrideTableStyleFontSizeAndJustification" w:uri="http://schemas.microsoft.com/office/word" w:val="1"/>
+        <w:compatSetting w:name="enableOpenTypeFeatures" w:uri="http://schemas.microsoft.com/office/word" w:val="1"/>
+        <w:compatSetting w:name="doNotFlipMirrorIndents" w:uri="http://schemas.microsoft.com/office/word" w:val="1"/>
+        <w:compatSetting w:name="differentiateMultirowTableHeaders" w:uri="http://schemas.microsoft.com/office/word" w:val="1"/>
+    </w:compat>
+    <w:themeFontLang w:val="fr-FR" w:eastAsia="" w:bidi=""/>
+</w:settings>
+';
+        // $zip->put('word/settings.xml', $xml);
         // generation of word/document.xml needs some links
         // from template, especially for head and foot page.
         file_put_contents($templPath, $zip->get('word/document.xml'));
