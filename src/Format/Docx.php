@@ -168,8 +168,9 @@ class Docx extends Zip
      * Build a lite TEI with some custom tags like <i> or <sc>, easier to clean
      * with regex
      */
-    function teilike(?array $pars = null):void
+    function teilike(?array $pars = []):void
     {
+        $pars['file'] = $this->file;
         // a local DOM with right properties
         $DOM = $this->newDOM();
         // DO NOT indent here
@@ -247,63 +248,6 @@ class Docx extends Zip
         }
         $this->tmpl = "file:///" . str_replace(DIRECTORY_SEPARATOR, "/", $xml_file);
         Log::info("Docx > tei, user xml template: ". $this->tmpl);
-    }
-
-
-
-    /**
-     * TODO, extract image from docx
-     * Extract images from  <graphic> elements from a DOM doc, copy linked images in a flat dstdir
-     * copy linked images in an images folder $dstdir, and modify relative link
-     *
-     * $hrefdir : a href prefix to redirest generated links
-     * $dstdir : a folder if images should be copied
-     * return : a doc with updated links to image
-     */
-    public function images($dst_tei, $href_prefix)
-    {
-        $DOM = $this->teiDOM;
-        $count = 1;
-        $nl = $DOM->getElementsByTagNameNS('http://www.tei-c.org/ns/1.0', 'graphic');
-        // $pad = strlen('' . $nl->count());
-        foreach ($nl as $el) {
-            $att = $el->getAttributeNode("url");
-            if (!isset($att) || !$att || !$att->value) {
-                continue;
-            }
-            $src = $att->value;
-            // do not modify data image
-            if (strpos($src, 'data:image') === 0) {
-                continue;
-            }
-            // test if coming fron the internet
-            if (substr($src, 0, 4) == 'http') {
-                continue;
-            }
-            // should be an image comming from the docx
-            $no = str_pad(strval($count), 3, '0', STR_PAD_LEFT);
-            $ext = pathinfo($src, PATHINFO_EXTENSION);
-            $dir = dirname($dst_tei) . "/";
-            if ($dir == '/')  {
-                $dir = '';
-            }
-            $href = $href_prefix . $no . '.' . $ext;
-            $dst_file =  $dir . $href;
-            Filesys::mkdir(dirname($dst_file));
-            Log::info($src . " -> " . $dst_file);
-            $contents = $this->zip->getFromName('word/' . $src);
-            file_put_contents($dst_file, $contents);
-            $att->value = $href;
-            // $this->img($el->getAttributeNode("url"), , $hrefdir, $dstdir);
-            $count++;
-        }
-        /*
-    do not store images of pages, especially in tif
-    foreach ($doc->getElementsByTagNameNS('http://www.tei-c.org/ns/1.0', 'pb') as $el) {
-      $this->img($el->getAttributeNode("facs"), $hrefTei, $dstdir, $hrefSqlite);
-    }
-    */
-        // return $DOM;
     }
 
     /**

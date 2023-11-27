@@ -85,7 +85,7 @@ class Tei2docx extends AbstractTei2
             $data = Filesys::loadURL($att->value, $dom_dir);
             if (!$data) {
                 // something went wrong and should have been logged
-                // remove attribute
+                // attribute is removed to avoid docx error for links
                 $el->removeAttribute("url");
                 continue;
             }
