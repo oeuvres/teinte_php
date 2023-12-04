@@ -170,9 +170,10 @@ class Tei2docx extends AbstractTei2
     <Default Extension="xml" ContentType="application/xml"/>
     <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
     <!-- Needed for images -->
-    <Default Extension="png" ContentType="image/png"/>
+    <Default Extension="emf" ContentType="image/x-emf"/>
     <Default Extension="jpeg" ContentType="image/jpeg"/>
     <Default Extension="jpg" ContentType="image/jpeg"/>
+    <Default Extension="png" ContentType="image/png"/>
     <Default Extension="tif" ContentType="image/tif"/>
     <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
     <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
