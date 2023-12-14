@@ -95,7 +95,7 @@ class Epub extends Zip
     /**
      * Load and check
      */
-    public function open(string $file): bool
+    public function open(string $file, ?int $flags = 0): bool
     {
         $this->reset();
         if (!parent::open($file)) {

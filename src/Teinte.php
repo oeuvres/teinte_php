@@ -132,7 +132,7 @@ foreach ($glob as $dir) {
                 }
                 // for reports, no output if no force
                 if (!$force && $inplace) {
-                    $source->toDoc($format);
+                    $source->toDOM($format);
                 } else {
                     $source->toUri($format, $dst_file);
                 }

@@ -112,7 +112,7 @@ class Markdown extends File
     {
         // ensure html making
         $htmlDOM = $this->htmlDOM();
-        $this->teiDOM = Xt::transformToDoc(
+        $this->teiDOM = Xt::transformToDOM(
             Xpack::dir() . 'html_tei/html_tei.xsl', 
             $htmlDOM
         );
