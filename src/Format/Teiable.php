@@ -73,7 +73,7 @@ trait Teiable
      */
     function teiReset(): void
     {
-        $this->tei = null;
+        $this->teiXML = null;
         $this->teiDOM = null;
         // if file
         if (property_exists($this, 'file')) $this->file = null;

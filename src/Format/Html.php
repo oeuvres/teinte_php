@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Oeuvres\Teinte\Format;
 
+use Oeuvres\Kit\{Xt};
+use Oeuvres\Xsl\{Xpack};
 
 /**
  * An Html text for content import
@@ -118,6 +120,27 @@ class Html extends File
         $keys=preg_replace('/^(.*)$/', '/<([^\/> ]+)[^>]*(title="$1")[^>]*>/iu', $a);
         $re=array_merge ($re, array_combine($keys, array_fill  ( 0 , count($keys) , '<$1 $2 class="mark">' )) );
         return $re;
+    }
+
+    /**
+     * Make html
+     */
+    public function htmlMake(?array $pars = null):void
+    {
+        $this->html = $this->contents();
+    }
+
+    /**
+     * Make tei, Not well tested
+     */
+    public function teiMake(?array $pars = null):void
+    {
+        // ensure html making
+        $htmlDOM = $this->htmlDOM();
+        $this->teiDOM = Xt::transformToDOM(
+            Xpack::dir() . 'html_tei/html_tei.xsl', 
+            $htmlDOM
+        );
     }
 
 }
