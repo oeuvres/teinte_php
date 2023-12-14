@@ -60,14 +60,13 @@ class Markdown extends File
         if (!$contents) {
             throw new Exception(I18n::_('File.noload', $this->file));
         }
+
+        // avoid notice from Markdown parser
+        $error_level = error_reporting();
+        error_reporting($error_level ^ E_NOTICE);
         $xhtml = self::$parser->text($contents);
-        /*
-        $xhtml = "<article xmlns=\"http://www.w3.org/1999/xhtml\">\n"
-            ."  <section>\n"
-            . $xhtml
-            . "  </section>\n"
-            ."</article>\n";
-        */
+        error_reporting($error_level);
+        
         // restore hirearchy of title
         $last = -1;
         $xhtml =  preg_replace_callback(
