@@ -46,13 +46,12 @@ class File
      */
     public function open(string $file): bool
     {
-        $this->contents = null;
-        $this->file = $file;
+        $this->reset();
         if (!Filesys::readable($file)) {
             // Filesys logging
-            $this->reset();
             return false;
         }
+        $this->file = $file;
         $this->filename = pathinfo($file, PATHINFO_FILENAME);
         $this->filemtime = filemtime($file);
         $this->filesize = filesize($file); // ?? if URL ?
@@ -64,6 +63,7 @@ class File
      */
     public function reset():void
     {
+        $this->contents = null;
         $this->filename = null;
         $this->filemtime = null;
         $this->filesize = null;
@@ -145,8 +145,8 @@ class File
     }
 
     /*
-    * Return content if loaded or load it
-    */
+     * Return content if loaded or load it
+     */
     public function contents(): string
     {
         if (!isset($this->file)) {
