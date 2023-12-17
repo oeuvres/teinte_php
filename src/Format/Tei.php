@@ -29,16 +29,17 @@ class Tei extends File
     /**
      * Load XML/TEI as a file (preferred way to hav some metas).
      */
-    public function open(string $src_file): bool
+    public function open(string $file): bool
     {
         $this->teiReset();
-        if (!parent::open($src_file)) {
+        if (!parent::open($file)) {
             // parent has return false, probably an error 
             return false;
         }
+        // shall we break or inform on malformed file ?
         $this->loadXML($this->contents());
         // set DocumentURI for xi:include resolution
-        $this->teiDOM->documentURI = "file:///" . str_replace('\\', '/', realpath($src_file));
+        $this->teiDOM->documentURI = "file:///" . str_replace('\\', '/', realpath($file));
         // inclusions done, XML has change
         if ($this->teiDOM->xinclude()) {
             $this->teiXML = $this->teiDOM->saveXML();
@@ -354,7 +355,6 @@ class Tei extends File
             }
             $data = Filesys::loadURL($url, $dom_dir);
             if (!$data) {
-                // something went wrong and should have been logged
                 continue;
             }
             if ($counter) {

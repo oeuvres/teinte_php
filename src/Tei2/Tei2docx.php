@@ -77,16 +77,23 @@ class Tei2docx extends AbstractTei2
         if (!$nl->count()) return;
         $pad = strlen('' . $nl->count());
         $found = false;
+        $toDel = [];
+        // be careful, NodeList is living, do not delete here
         foreach ($nl as $el) {
             $att = $el->getAttributeNode("url");
             if (!isset($att) || !$att || !$att->value) {
                 continue;
             }
-            $data = Filesys::loadURL($att->value, $dom_dir);
+            $url = $att->value;
+            // broken link from word, be nice
+            if (substr( $url, 0, 6 ) === "zip://" 
+            && substr( $url, -6 ) === "#word/") {
+                $toDel[] = $el;
+                continue;
+            }
+            $data = Filesys::loadURL($url, $dom_dir);
             if (!$data) {
-                // something went wrong and should have been logged
-                // attribute is removed to avoid docx error for links
-                $el->removeAttribute("url");
+                // a log message given upper
                 continue;
             }
             $image_path = "media/image_" 
@@ -99,6 +106,20 @@ class Tei2docx extends AbstractTei2
             // change attribute value
             $el->setAttribute("url", $image_path);
             $count++;
+        }
+        // outside living nodeList
+        if (($count = count($toDel))) {
+            log::warning("$count image broken links zip://…#word/");
+        }
+        foreach ($toDel as $key => $el) {
+            $text = $el->ownerDocument->createTextNode("[?]");
+            $parent = $el->parentNode;
+            if($parent->tagName == 'figure') {
+                $el = $parent;
+                $parent = $el->parentNode;
+            }
+            $parent->insertBefore($text, $el);
+            $parent->removeChild($el);
         }
     }
 
@@ -121,7 +142,7 @@ class Tei2docx extends AbstractTei2
         if ($zip->open($dst_file) !== TRUE) {
             return false;
         }
-        // import images
+        // import images before transforming tei, to have good paths
         self::images($dom, $zip);
 
         // get a default lang from the source TEI, set it in the style.xml
