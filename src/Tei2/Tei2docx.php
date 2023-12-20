@@ -249,8 +249,6 @@ class Tei2docx extends AbstractTei2
             $xml
         );
         $zip->put('word/document.xml', $xml);
-        file_put_contents($dst_file . '.document.xml', $xml);
-
         // keep some relations in footnotes from template
         file_put_contents(
             $templPath, 
