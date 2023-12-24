@@ -9,7 +9,7 @@
 
 namespace Oeuvres\Teinte\Tei2;
 
-use Exception, DOMDocument, ZipArchive;
+use Exception, DOMDocument, DOMNode, ZipArchive;
 use Oeuvres\Teinte\Format\{Zip};
 use Oeuvres\Kit\{Check, Log, Filesys, Xt};
 use Oeuvres\Xsl\{Xpack};
@@ -23,6 +23,7 @@ class Tei2docx extends AbstractTei2
 {
     const EXT = '.docx';
     const NAME = "docx";
+
 
     /** Some mapping between 3 char iso languange code to 2 char */
     const ISO639_3char = [
@@ -65,7 +66,9 @@ class Tei2docx extends AbstractTei2
         return null;
     }
 
-
+    /**
+     * Include images files pointed by <graphic url=""/>
+     */
     private static function images(DOMDocument $dom, Zip $zip)
     {
         $dom_dir = null;
