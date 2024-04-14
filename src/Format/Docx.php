@@ -102,22 +102,24 @@ class Docx extends Zip
 ';
         // list of entries from the docx to concat
         $entries = [
-            // link in endnotes
-            'word/_rels/endnotes.xml.rels' => 'application/vnd.openxmlformats-package.relationships+xml',
+            // comments
+            'word/comments.xml' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.comments+xml',
+            // main content
+            'word/document.xml' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml',
+            // endnotes
+            'word/endnotes.xml' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.endnotes+xml',
+            // footnotes
+            'word/footnotes.xml' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.footnotes+xml',
             // for lists numbering
             "word/numbering.xml" => "application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml",
             // styles 
             'word/styles.xml' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml',
-            // main content
-            'word/document.xml' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml',
             // links target in main content
             'word/_rels/document.xml.rels' => 'application/vnd.openxmlformats-package.relationships+xml',
-            // footnotes
-            'word/footnotes.xml' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.footnotes+xml',
+            // link in endnotes
+            'word/_rels/endnotes.xml.rels' => 'application/vnd.openxmlformats-package.relationships+xml',
             // links in footnotes
             'word/_rels/footnotes.xml.rels' => 'application/vnd.openxmlformats-package.relationships+xml',
-            // endnotes
-            'word/endnotes.xml' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.endnotes+xml',
         ];
         foreach($entries as $name => $type) {
             // check error here ?
